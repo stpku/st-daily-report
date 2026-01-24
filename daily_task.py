@@ -32,9 +32,14 @@ def run_git_commands():
 
 def main():
     today = datetime.date.today().isoformat()
+    year = today[:4]
+    month = today[5:7]
+    day = today[8:10]
     
-    if not os.path.exists(DEST_DIR):
-        os.makedirs(DEST_DIR)
+    target_dir = os.path.join(DEST_DIR, year, month, day)
+    
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
         
     files = [f for f in os.listdir(SOURCE_DIR) if re.match(FILE_PATTERN, f)]
     if not files:
@@ -60,7 +65,7 @@ def main():
             name_root, ext = os.path.splitext(filename)
             new_filename = f"{name_root}_{today}{ext}"
             
-        dest_path = os.path.join(DEST_DIR, new_filename)
+        dest_path = os.path.join(target_dir, new_filename)
         
         with open(dest_path, 'w', encoding='utf-8') as f:
             f.write(content)
