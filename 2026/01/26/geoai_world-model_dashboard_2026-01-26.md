@@ -1,81 +1,79 @@
 # GeoAI + 世界模型 紧凑型仪表盘
 **Date:** 2026-01-26  
-**Scope:** GeoAI（空间智能 / 遥感 / GIS+AI） + World Model（3D生成 / 通用模拟 / 具身智能）  
-**Priorities（今日优先级）:**  
-1) 以“可校准不确定性 + 稀疏观测补全”为核心，推进GEDI/作物/植被类壁到壁（wall-to-wall）产品可用性  
-2) 以“合成数据 + 无监督/弱监督”为抓手，降低高光谱/变化检测标注成本  
-3) 连接“视频世界模型 → 规划控制”，寻找可迁移到地球观测时空动力学的建模范式  
+**Scope:** GeoAI（空间智能 / 遥感 / GIS + AI）+ World Model（3D生成 / 通用仿真 / 具身智能）  
+**Priorities（今日关注）:** ① 农业与生态（作物/生物量/植被）② 稀疏观测到连续地图（插值+校准不确定性）③ 遥感变化检测与多尺度目标检测 ④ “视频/世界模型”到控制与规划的可迁移性  
 
 ---
 
 ## A. Top Papers（精选 8 篇）
-> 说明：标题已中文化，保留原英文题名便于检索；每篇给出一句洞见（One-line Insight）。
+> 标题中文为译名，保留英文原题于括号；附一条“One-line Insight”。
 
-1) **基于嵌入的塞内加尔花生盆地作物类型分类**（Embedding-based Crop Type Classification in the Groundnut Basin of Senegal）  
-- Published: 2026-01-23 | http://arxiv.org/abs/2601.16900v1  
-- **One-line Insight:** 用“嵌入表示”替代传统端到端分类，有望把小农区的跨地块/跨季节泛化与迁移做得更稳、更省标注。
+1) **校准的 GEDI 生物量概率插值（Calibrated Probabilistic Interpolation for GEDI Biomass）**  
+- Link: http://arxiv.org/abs/2601.16834v1 （2026-01-23）  
+- **One-line Insight:** 直面“稀疏 LiDAR → 连续生物量图”的核心难题，把**概率插值+校准**放在中心位置，利于下游碳核算与风险决策。
 
-2) **面向GEDI生物量的校准型概率插值**（Calibrated Probabilistic Interpolation for GEDI Biomass）  
-- Published: 2026-01-23 | http://arxiv.org/abs/2601.16834v1  
-- **One-line Insight:** 从“点到面”的关键不只是精度，更是**可校准的不确定性**——这决定了生物量产品能否进入风控、碳核算与政策场景。
+2) **AgriPINN：面向水分胁迫的可解释作物生物量预测（AgriPINN: A Process-Informed Neural Network for Interpretable and Scalable Crop Biomass Prediction Under Water Stress）**  
+- Link: http://arxiv.org/abs/2601.16045v1 （2026-01-22）  
+- **One-line Insight:** 用“过程约束/先验”给神经网络加护栏，在小样本或跨区泛化时更稳，同时提升可解释性（对农业部门更友好）。
 
-3) **用全合成训练实现高光谱遥感无监督超分辨率**（Unsupervised Super-Resolution of Hyperspectral Remote Sensing Images Using Fully Synthetic Training）  
-- Published: 2026-01-23 | http://arxiv.org/abs/2601.16602v1  
-- **One-line Insight:** “纯合成 + 无监督”把数据瓶颈从标注转移到“物理一致的退化建模”，为高光谱规模化落地提供新路径。
+3) **基于嵌入的塞内加尔花生带作物类型分类（Embedding-based Crop Type Classification in the Groundnut Basin of Senegal）**  
+- Link: http://arxiv.org/abs/2601.16900v1 （2026-01-23）  
+- **One-line Insight:** 以表征学习（embedding）切入小农场景作物制图，提示“**更通用的特征空间**”可能比任务头设计更关键。
 
-4) **HA2F：双模块协同引导的层级自适应聚合变化检测框架**（HA2F: Dual-module Collaboration-Guided Hierarchical Adaptive Aggregation Framework for Remote Sensing Change Detection）  
-- Published: 2026-01-23 | http://arxiv.org/abs/2601.16573v1  
-- **One-line Insight:** 变化检测的难点在多尺度与伪变化，层级聚合 + 协同模块更像“结构化归因”，利于从检测走向可解释变化类型分析。
+4) **使用全合成训练的高光谱无监督超分辨（Unsupervised Super-Resolution of Hyperspectral Remote Sensing Images Using Fully Synthetic Training）**  
+- Link: http://arxiv.org/abs/2601.16602v1 （2026-01-23）  
+- **One-line Insight:** 以“全合成数据”绕开真实配准/标注瓶颈，为高光谱 SR 提供可扩展路线，但需要重点审视域偏移与光谱保真。
 
-5) **DCCS-Det：方向上下文与跨尺度感知的红外小目标检测器**（DCCS-Det: Directional Context and Cross-Scale-Aware Detector for Infrared Small Target）  
-- Published: 2026-01-23 | http://arxiv.org/abs/2601.16428v1  
-- **One-line Insight:** 小目标检出往往输在“背景结构”，显式方向上下文与跨尺度一致性可显著提升低对比、复杂纹理下的可靠性。
+5) **HA2F：层次自适应聚合的遥感变化检测（HA2F: Dual-module Collaboration-Guided Hierarchical Adaptive Aggregation Framework for Remote Sensing Change Detection）**  
+- Link: http://arxiv.org/abs/2601.16573v1 （2026-01-23）  
+- **One-line Insight:** 聚焦变化检测的多尺度与语义不一致问题，通过分层聚合与模块协同提升“细小变化+大范围变化”兼容性。
 
-6) **通过强化式微调让多模态大模型学习领域知识**（Learning Domain Knowledge in Multimodal Large Language Models through Reinforcement Fine-Tuning）  
-- Published: 2026-01-23 | http://arxiv.org/abs/2601.16419v1  
-- **One-line Insight:** 用RFT把“遥感/GIS规则、术语与任务约束”注入MLLM，为“可执行的地理助理（能查、能算、能审计）”铺路。
+6) **DCCS-Det：方向上下文与跨尺度红外小目标检测（DCCS-Det: Directional Context and Cross-Scale-Aware Detector for Infrared Small Target）**  
+- Link: http://arxiv.org/abs/2601.16428v1 （2026-01-23）  
+- **One-line Insight:** 将方向性上下文与跨尺度建模显式化，适合“低对比+小目标”类遥感/监视任务，工程落地价值高。
 
-7) **基于气候属性的四角地区植被状况长期概率预测**（Long-Term Probabilistic Forecast of Vegetation Conditions Using Climate Attributes in the Four Corners Region）  
-- Published: 2026-01-22 | http://arxiv.org/abs/2601.16347v1  
-- **One-line Insight:** 把植被预测从单点回归升级为概率预报，更贴合干旱风险、牧场承载与农业保险的决策需求。
+7) **通过强化微调让多模态大模型学习领域知识（Learning Domain Knowledge in Multimodal Large Language Models through Reinforcement Fine-Tuning）**  
+- Link: http://arxiv.org/abs/2601.16419v1 （2026-01-23）  
+- **One-line Insight:** 给 MLLM 引入“可控的领域对齐信号”，为遥感等专业领域的可靠问答、制图解释、工作流代理提供路径。
 
-8) **Cosmos Policy：微调视频模型用于视觉-运动控制与规划**（Cosmos Policy: Fine-Tuning Video Models for Visuomotor Control and Planning）  
-- Published: 2026-01-22 | http://arxiv.org/abs/2601.16163v1  
-- **One-line Insight:** 视频世界模型的时空先验可转化为策略与规划能力；同样思路可迁移到“地表时空演化”（洪水、火灾、作物生长）的可控模拟与反事实推演。
-
----
-
-## B. Industry News（产业动态｜基于公开趋势的合理推演）
-1) **Google/DeepMind 生态：地理基础模型进一步产品化**  
-   - 趋势：更强调“可追溯数据谱系（data lineage）+ 不确定性披露”，面向公共部门与气候风控的合规要求；Earth Engine 侧可能强化对基础模型推理管线的托管与成本优化。
-
-2) **NVIDIA：合成数据 + 物理仿真工具链继续向遥感/城市数字孪生扩展**  
-   - 趋势：以Omniverse/Sim为核心，把传感器模型（SAR/多光谱/IR）与域随机化打包，服务变化检测、小目标、灾害演练数据生产。
-
-3) **Microsoft：Azure 侧强化“地理智能 Copilot”工作流**  
-   - 趋势：把GIS查询、矢栅转换、时空聚合、栅格统计等操作封装为可审计的工具调用（tool-use），让企业在私有数据域内构建可控的GeoAI Agent。
-
-4) **商业遥感与农业科技：从“图像分类”转向“预测 + 保险/信贷”闭环**  
-   - 趋势：更关注概率预报与可校准置信区间（对应GEDI插值、植被概率预测），以减少理赔争议与提升风控可解释性。
+8) **Cosmos Policy：微调视频模型用于视觉运动控制与规划（Cosmos Policy: Fine-Tuning Video Models for Visuomotor Control and Planning）**  
+- Link: http://arxiv.org/abs/2601.16163v1 （2026-01-22）  
+- **One-line Insight:** 把视频生成模型的时空先验转为可执行策略，是“世界模型→具身控制”的代表路线；对无人机/机器人巡检很有借鉴。
 
 ---
 
-## C. Open Source Projects（建议关注/可复用）
-1) **TorchGeo / Raster Vision / MMDetection-RS（或遥感分支）**：遥感数据管线、检测/分割基线完善，适合作为HA2F、DCCS-Det复现实验底座。  
-2) **ODC（Open Data Cube）生态**：面向时空数据立方体的规范化管理与批处理，便于构建“全国级变化监测/植被预测”流水线。  
-3) **xarray + rioxarray + dask + stackstac**：大规模栅格并行计算的工程组合，适配GEDI稀疏点与多源影像融合。  
-4) **PyMC / NumPyro / Stan（概率建模）**：对应“校准型概率插值/预测”，快速搭建不确定性可解释基线与后验诊断。  
+## B. Industry News（产业动态｜基于公开常识的合理推演）
+1) **Google/DeepMind 生态侧：更紧的“地理基础模型 + 检索”集成趋势**  
+- 方向上更强调：把遥感底图、矢量要素、时间序列与文本知识库做统一检索与对话式分析，面向气候与灾害响应的“可追溯解释链”。
+
+2) **NVIDIA 侧：数字孪生与仿真训练继续向“传感器真实感 + 合成数据闭环”推进**  
+- 重点是把多传感器（RGB/IR/LiDAR/SAR 近似）模拟与合成数据管线做得更工业化，服务机器人、自动驾驶与遥感算法训练。
+
+3) **Microsoft 侧：云上地学工作流向“Agent 化”和“端到端可复现”演进**  
+- 结合数据湖/时空索引与 Copilot/Agent 编排，推动从数据准备、训练、推理到制图发布的自动化；更强调权限、合规与审计。
+
+4) **农业科技公司：作物监测产品从“分类图”转向“概率+风险”交付**  
+- 更常见的交付形态是：作物类型/长势/产量异常的**不确定性地图**与告警阈值配置，贴近保险与供应链的决策方式。
 
 ---
 
-## D. 3 New Ideas（GeoAI × World Model 融合新点子）
-1) **“GEDI-to-Wall”世界模型：稀疏LiDAR驱动的可校准地上生物量生成器**  
-   - 用概率生成/扩散模型做空间补全，并用校准损失约束置信度；输出不仅是均值图，还能给碳核算“可审计的不确定性预算”。
+## C. Open Source Projects（建议关注/可用于搭建今日主题栈）
+- **TorchGeo**：遥感/地学数据集与训练管线，适合快速复现实验与迁移学习。  
+- **Rasterio / rioxarray / GeoPandas**：Python 地理栅格与矢量处理基础件，做时空数据工程必备。  
+- **eo-learn**：面向 Sentinel 等 EO 的工作流拼装，适合生产化批处理。  
+- **DVC / MLflow**：遥感训练的可复现实验管理（大数据+多版本模型尤重要）。  
+- **Habitat / Isaac Lab（仿真）**：具身智能与策略训练常用环境，可对接“视频/世界模型→控制”。  
 
-2) **作物嵌入 + 过程约束联合：把AgriPINN变成“可检索的作物表征库”**  
-   - 将作物类型嵌入与水分胁迫过程模型联训，使“类型识别—生物量预测—风险预警”共享表征；支持跨国家/跨季节零样本迁移。
+---
 
-3) **面向灾害的时空反事实模拟：用视频世界模型做“变化检测的生成式解释”**  
-   - 变化检测不仅给mask，还生成“如果没有修路/火烧/洪水，场景会如何演化”的反事实视频；用于规划评估与责任归因（并输出不确定性）。
+## D. 3 New Ideas（GeoAI × World Model 融合创意）
+1) **“GEDI 稀疏点 → 世界模型先验 → 连续生物量场”的不确定性闭环**  
+- 用世界模型（时空生成/动力学先验）作为插值先验，对 GEDI 稀疏采样进行“物理一致”的补全，并输出校准过的置信区间用于碳盘查与交易风控。
+
+2) **面向小农场景的“嵌入式作物表征 + 合成季节轨迹生成”**  
+- 先学跨区通用 embedding（作物/土壤/管理方式），再用生成式时序世界模型合成不同降雨/播期下的植被指数轨迹，实现低标注地区的作物类型与长势鲁棒推断。
+
+3) **灾后变化检测的“多尺度检测器 + 可交互世界模型回放”系统**  
+- 将变化检测（HA2F）与小目标检测（DCCS-Det）输出作为事件约束，驱动一个可回放的时空世界模型生成“灾前-灾后-恢复”场景序列，辅助应急部门做复盘与资源调度。
 
 ---

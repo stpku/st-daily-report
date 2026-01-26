@@ -63,24 +63,33 @@ def load_config():
     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-def generate_content(config, date_str, papers_context):
+def generate_content(config, date_str, papers_context, language="zh"):
     api_url = f"{config['api_base_url'].rstrip('/')}/chat/completions"
     headers = {
         "Authorization": f"Bearer {config['api_key']}",
         "Content-Type": "application/json"
     }
     
-    system_prompt = """You are an expert AI editor for a 'GeoAI + World Model' Daily Dashboard.
+    if language == "zh":
+        lang_instruction = "Chinese (Simplified)"
+        title_format = "# GeoAI + 世界模型 紧凑型仪表盘"
+        scope_line = "Scope: GeoAI (空间智能) + World Model (3D生成与模拟)"
+    else:
+        lang_instruction = "English"
+        title_format = "# GeoAI + World Model Compact Dashboard"
+        scope_line = "Scope: GeoAI (Spatial Intelligence) + World Model (3D Generation & Simulation)"
+
+    system_prompt = f"""You are an expert AI editor for a 'GeoAI + World Model' Daily Dashboard.
 Your goal is to generate a high-quality, professional daily report in Markdown format.
 Focus areas:
 1. GeoAI (Spatial Intelligence, Remote Sensing, GIS + AI)
 2. World Models (3D Generation, General Simulation, Embodied AI)
 
 Format requirements:
-- Language: Chinese (Simplified)
+- Language: {lang_instruction}
 - Structure:
   - Header (Date, Scope, Priorities)
-  - A. Top Papers (Use the provided Arxiv papers context. Select the most relevant 5-8 papers. Translate titles to Chinese but keep original English title in brackets if needed. Add 'One-line Insight'.)
+  - A. Top Papers (Use the provided Arxiv papers context. Select the most relevant 5-8 papers. For Chinese version, translate titles but keep original English in brackets. Add 'One-line Insight'.)
   - B. Industry News (Generate 3-5 realistic industry updates based on general knowledge of Tech Giants like Google, NVIDIA, Microsoft in this field)
   - C. Open Source Projects (Suggest relevant open source projects)
   - D. 3 New Ideas (Creative fusion of GeoAI + World Model)
@@ -93,9 +102,9 @@ Here is the latest Arxiv Papers context:
 
 Please create a structure like this:
 
-# GeoAI + 世界模型 紧凑型仪表盘
+{title_format}
 Date: {date_str}
-Scope: GeoAI (空间智能) + World Model (3D生成与模拟)
+{scope_line}
 ...
 """
 
@@ -128,23 +137,35 @@ def main():
     
     papers_context = fetch_arxiv_papers()
     
-    print(f"Generating report for {today} using model {config.get('model')}...")
-    content = generate_content(config, today, papers_context)
+    # Generate Chinese version
+    print(f"Generating Chinese report for {today}...")
+    content_zh = generate_content(config, today, papers_context, language="zh")
     
-    if content:
+    if content_zh:
         output_dir = "/mnt/d/04_代码/code/sandbox/doc/view"
-        filename = f"geoai_world-model_dashboard_{today}.md"
-        filepath = os.path.join(output_dir, filename)
-        
-        # Ensure directory exists
+        filename_zh = f"geoai_world-model_dashboard_{today}.md"
+        filepath_zh = os.path.join(output_dir, filename_zh)
         os.makedirs(output_dir, exist_ok=True)
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        
-        print(f"Successfully generated: {filepath}")
+        with open(filepath_zh, 'w', encoding='utf-8') as f:
+            f.write(content_zh)
+        print(f"Successfully generated (ZH): {filepath_zh}")
     else:
-        print("Failed to generate content.")
+        print("Failed to generate Chinese content.")
+
+    # Generate English version
+    print(f"Generating English report for {today}...")
+    content_en = generate_content(config, today, papers_context, language="en")
+    
+    if content_en:
+        output_dir = "/mnt/d/04_代码/code/sandbox/doc/view"
+        filename_en = f"geoai_world-model_dashboard_en_{today}.md"
+        filepath_en = os.path.join(output_dir, filename_en)
+        os.makedirs(output_dir, exist_ok=True)
+        with open(filepath_en, 'w', encoding='utf-8') as f:
+            f.write(content_en)
+        print(f"Successfully generated (EN): {filepath_en}")
+    else:
+        print("Failed to generate English content.")
 
 if __name__ == "__main__":
     main()
