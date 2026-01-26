@@ -1,4 +1,4 @@
-# GeoAI + 世界模型 紧凑型仪表盘
+# GeoAI & World Model Daily Insight
 **Date:** 2026-01-26  
 **Scope:** GeoAI（空间智能 / 遥感 / GIS + AI）+ World Model（3D生成 / 通用仿真 / 具身智能）  
 **Priorities（今日关注）:** ① 农业与生态（作物/生物量/植被）② 稀疏观测到连续地图（插值+校准不确定性）③ 遥感变化检测与多尺度目标检测 ④ “视频/世界模型”到控制与规划的可迁移性  
