@@ -1,93 +1,83 @@
-# GeoAI + World Model Compact Dashboard  
-**Date:** 2026-01-28  
-**Scope:** GeoAI (Spatial Intelligence, Remote Sensing, GIS+AI) + World Models (3D Generation, General Simulation, Embodied AI)  
-**Priorities (Today):**  
-1) Disaster-response multimodal grounding from satellite + text + functions  
-2) Reliable evaluation loops for VLA/robotics and “world-model-to-policy” pipelines  
-3) Cross-modality translation + retrieval to reduce labeling friction in geospatial domains  
+# GeoAI + World Model Compact Dashboard
+Date: 2026-01-28  
+Scope: GeoAI (Spatial Intelligence) + World Model (3D Generation & Simulation)  
+Key Message(Today's Highlights):  
+World models are rapidly moving from research demos to APIs and product surfaces, while new papers push (1) longer-horizon generative video stability, (2) event-structured world models for RL generalization, and (3) dynamic human–scene interaction in changing environments—ingredients that map naturally onto GeoAI’s needs for time-evolving digital twins and actionable geospatial reasoning.
 
 ---
 
-## A. Top Papers (Most Relevant 5–8)
+## A. Top Papers (Arxiv | 5–8)
+1) **Visual Generation Unlocks Human-Like Reasoning through Multimodal World Models** [[arXiv](http://arxiv.org/abs/2601.19834v1)]  
+   *One-line Insight:* Argues that “reasoning by generation” (manipulating latent visual concepts) can act as a practical route to more human-like world modeling—relevant for geospatial “imagine-and-verify” workflows.
 
-1) **DisasterInsight: A Multimodal Benchmark for Function-Aware and Grounded Disaster Assessment**  
-   Link: http://arxiv.org/abs/2601.18493v1  
-   **One-line Insight:** Pushes remote-sensing VLM evaluation beyond coarse labels toward *grounded, function-aware* disaster understanding—useful for actionable damage + accessibility assessment.
+2) **Entropy-Guided k-Guard Sampling for Long-Horizon Autoregressive Video Generation** [[arXiv](http://arxiv.org/abs/2601.19488v1)]  
+   *One-line Insight:* Introduces a sampling strategy to reduce drift/collapse over long video rollouts—useful for stable time-lapse remote-sensing forecasting or city-scale simulation renderings.
 
-2) **Multi-Perspective Subimage CLIP with Keyword Guidance for Remote Sensing Image-Text Retrieval**  
-   Link: http://arxiv.org/abs/2601.18190v1  
-   **One-line Insight:** Improves RS image–text retrieval by combining subimage/multi-view matching with keyword guidance—practical for geospatial search, cataloging, and weak supervision.
+3) **From Observations to Events: Event-Aware World Model for Reinforcement Learning** [[arXiv](http://arxiv.org/abs/2601.19336v1)]  
+   *One-line Insight:* Moves from pixel/state prediction to *event* abstractions to generalize across structurally similar environments—mirrors how GeoAI may benefit from event layers (construction, flooding, crop cycles) over raw imagery.
 
-3) **Adaptive Domain Shift in Diffusion Models for Cross-Modality Image Translation**  
-   Link: http://arxiv.org/abs/2601.18623v1  
-   **One-line Insight:** Replaces a single global transfer with adaptive shifts—relevant for SAR↔optical, daytime↔nighttime, and sensor-to-sensor translation without brittle assumptions.
+4) **Dynamic Worlds, Dynamic Humans: Generating Virtual Human-Scene Interaction Motion in Dynamic Scenes** [[arXiv](http://arxiv.org/abs/2601.19484v1)]  
+   *One-line Insight:* Models interactions where the scene itself changes, aligning with robotics-in-the-wild and “living” digital twins (traffic, crowds, disasters).
 
-4) **Revisiting Aerial Scene Classification on the AID Benchmark**  
-   Link: http://arxiv.org/abs/2601.18263v1  
-   **One-line Insight:** Re-examines a canonical aerial benchmark—useful as a “sanity check” paper for dataset bias, protocol drift, and modern backbone evaluation in RS classification.
+5) **GenCP: Towards Generative Modeling Paradigm of Coupled Physics** [[arXiv](http://arxiv.org/abs/2601.19541v1)]  
+   *One-line Insight:* Targets systems with multiple coupled physical processes—conceptually aligned with Earth-system and urban-system simulation where weather–hydrology–infrastructure co-evolve.
 
-5) **Trustworthy Evaluation of Robotic Manipulation: A New Benchmark and AutoEval Methods**  
-   Link: http://arxiv.org/abs/2601.18723v1  
-   **One-line Insight:** Introduces more trustworthy manipulation evaluation and automated scoring—relevant for validating embodied “world model → action” systems beyond cherry-picked demos.
+6) **HARMONI: Multimodal Personalization of Multi-User Human-Robot Interactions with LLMs** [[arXiv](http://arxiv.org/abs/2601.19839v1)]  
+   *One-line Insight:* Personalization for multi-user interaction offers a blueprint for field robots operating in shared geospatial spaces (utilities inspection, warehouses, ports) with user-specific objectives and constraints.
 
-6) **TC-IDM: Grounding Video Generation for Executable Zero-shot Robot Motion**  
-   Link: http://arxiv.org/abs/2601.18323v1  
-   **One-line Insight:** Uses video generation as an intermediate grounding to produce executable motion—suggests a path to convert *generative world dynamics* into controllable plans.
-
-7) **CASSANDRA: Programmatic and Probabilistic Learning and Inference for Stochastic World Modeling**  
-   Link: http://arxiv.org/abs/2601.18620v1  
-   **One-line Insight:** Programmatic + probabilistic world models help encode semantics and uncertainty—aligns with “geo-world models” where rules, events, and interventions matter.
-
-8) **Beyond Static Datasets: Robust Offline Policy Optimization via Vetted Synthetic Transitions**  
-   Link: http://arxiv.org/abs/2601.18107v1  
-   **One-line Insight:** Improves offline RL by adding *vetted synthetic transitions*—a concrete mechanism to use simulators/world models while controlling compounding errors.
+7) **Cosmic Rays as an Interdisciplinary Earth Observation Tool: From Particle Physics and Atmospheric Processes to Geosciences and Urban Science** [[arXiv](http://arxiv.org/abs/2601.19265v1)]  
+   *One-line Insight:* Surveys cosmic-ray sensing as a complementary EO modality—interesting for “non-optical” geospatial inference and as an auxiliary signal for world models under cloud/occlusion.
 
 ---
 
-## B. Industry News (3–5 items, with sources)
+## B. Industry News (3–5)
+1) **World Labs: “Announcing the World API”** (2026-01-21)  
+   Source: https://www.worldlabs.ai/blog  
+   Why it matters: Public APIs for generating explorable 3D worlds lower the barrier to integrate world models into mapping, simulation, training data generation, and interactive digital-twin experiences.
 
-1) **Google DeepMind updates Gemini Robotics direction with broader partner messaging around VLA-style generalist control.**  
-   Source: https://deepmind.google/discover/blog/
+2) **Scientific American: “World models could unlock the next revolution in artificial intelligence”** (2026-01-17)  
+   Source: https://www.scientificamerican.com/article/world-models-could-unlock-the-next-revolution-in-artificial-intelligence/  
+   Why it matters: Signals broader mainstream attention and framing—world models as a next step beyond language—helping justify investment in embodied + spatial AI stacks.
 
-2) **NVIDIA highlights continued “physical AI / world simulation” positioning for robotics and digital twins (Omniverse + robotics stack).**  
-   Source: https://developer.nvidia.com/blog/
+3) **Synspective: “How GeoAI, Earth Foundation Models, and SAR Are Reshaping Geospatial Intelligence”** (2026-01-15)  
+   Source: https://synspective.com/blogs/2026/kumar_blog4/  
+   Why it matters: Reinforces SAR + Earth foundation models as a practical path to all-weather, always-on geospatial intelligence—especially relevant for change detection and operational monitoring.
 
-3) **Esri emphasizes expanded AI assistants and geospatial analytics workflows across ArcGIS (packaging LLMs into GIS operations).**  
-   Source: https://www.esri.com/arcgis-blog/
+4) **Tripo: “Tripo Powers the Next Generation of 3D AI with Spatial Intelligence”** (2026-01-04)  
+   Source: https://www.morningstar.com/news/accesswire/1123789msn/tripo-powers-the-next-generation-of-3d-ai-with-spatial-intelligence-pr-3  
+   Why it matters: Continues the push toward fast, promptable 3D asset generation—potentially accelerating synthetic environment creation for sim-to-real and geospatial visualization.
 
-4) **Microsoft revisits Planetary-scale geospatial analytics and AI integration patterns via Azure data + model hosting guidance.**  
-   Source: https://azure.microsoft.com/en-us/blog/  
-
----
-
-## C. Open Source Projects (with URLs; not repeating recently featured ones)
-
-1) **EOxServer (OGC services for Earth observation data)** — Host and serve EO data with standards-based APIs; useful for operational GeoAI pipelines.  
-   https://github.com/EOxServer/eoxserver
-
-2) **OpenDroneMap (ODM)** — End-to-end photogrammetry (orthomosaic/DSM/point clouds) feeding 3D world models and mapping.  
-   https://github.com/OpenDroneMap/ODM
-
-3) **PDAL (Point Data Abstraction Library)** — Industrial-grade point cloud processing for LiDAR → 3D mapping → simulation assets.  
-   https://github.com/PDAL/PDAL
-
-4) **MapLibre GL JS** — High-performance open map rendering for interactive GeoAI dashboards and spatial debugging.  
-   https://github.com/maplibre/maplibre-gl-js
-
-5) **Sionna (simulation library for wireless channels, ray tracing)** — Useful to couple 3D world models with comms constraints (UAV/robot connectivity).  
-   https://github.com/NVlabs/sionna
+5) **Google DeepMind: “Genie 3: A new frontier for world models”** (2025-08-05)  
+   Source: https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/  
+   Why it matters: Remains a reference point for interactive environment generation speed/quality, and a benchmark for what “real-time-ish” world modeling could look like in product.
 
 ---
 
-## D. 3 New Ideas (GeoAI × World Model Fusion)
+## C. Open Source Projects (with URLs; excluding recently featured list)
+1) **Viser (interactive 3D visualizer for robotics / NeRF / point clouds)**  
+   https://github.com/nerfstudio-project/viser  
+   Use: Rapid inspection/debugging of 3D reconstructions, trajectories, and scene graphs—handy when bridging EO-derived geometry into interactive world-model tooling.
 
-1) **Function-aware disaster “task map” world model**  
-   Build a world model that outputs *affordance layers* (passable roads, reachable buildings, functional hospitals) from satellite + VLM grounding (inspired by DisasterInsight), then plan response logistics under uncertainty.
+2) **MinkowskiEngine (sparse 3D convolution library for point clouds/voxels)**  
+   https://github.com/NVIDIA/MinkowskiEngine  
+   Use: Efficient 3D semantic understanding for LiDAR / photogrammetry meshes—core for building “structured” world states from geospatial 3D.
 
-2) **Cross-sensor diffusion as synthetic data engine for retrieval + segmentation**  
-   Use adaptive domain-shift diffusion to translate between modalities (e.g., SAR→optical-like) and generate paired data to train retrieval/segmentation models with controlled “style knobs” (incidence angle, season, haze).
+3) **GeoPandas (Python geospatial vector analytics)**  
+   https://github.com/geopandas/geopandas  
+   Use: Reliable vector ETL/analytics layer that pairs well with foundation models and agentic workflows (e.g., converting model outputs into operational GIS artifacts).
 
-3) **Geo-conditioned offline RL with vetted synthetic transitions**  
-   Combine a city-scale 3D sim (meshes/point clouds) with offline logs from delivery/inspection robots; generate synthetic transitions only where a learned geo-world model is confident, improving safety and transfer.
+4) **Open3D (3D data processing: point clouds, registration, meshing)**  
+   https://github.com/isl-org/Open3D  
+   Use: A pragmatic bridge from raw 3D sensing to scene assets usable in simulation/world-model pipelines (registration, TSDF, meshing).
 
 ---
+
+## D. 3 New Ideas (GeoAI × World Model)
+1) **Event-layer world models for geospatial change**  
+   Train a world model to predict *events* (e.g., “new building footprint,” “road closure,” “burn scar expansion”) rather than pixels—then render events back into maps/alerts, borrowing the “event-aware” RL abstraction.
+
+2) **Long-horizon “GeoVideo” rollout for monitoring + counterfactuals**  
+   Use entropy-guided sampling ideas to stabilize multi-week/month rollouts of satellite-like sequences, enabling “what-if” visual counterfactuals (e.g., flood mitigation scenarios) with uncertainty-aware sampling.
+
+3) **Coupled-physics generative digital twins with EO constraints**  
+   Combine coupled-physics generative modeling with EO observations (SAR/optical/meteorology) as soft constraints, producing ensembles of plausible states for urban flooding, wildfire spread, or coastal dynamics—optimized for decision support rather than perfect reconstruction.
