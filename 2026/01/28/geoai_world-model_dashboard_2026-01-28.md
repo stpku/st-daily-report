@@ -1,96 +1,92 @@
-# GeoAI & World Model Daily Insight  
+# GeoAI & World Model Daily Insight
 **Date:** 2026-01-28  
-**Scope:** GeoAI（空间智能 / 遥感 / GIS + AI）+ World Model（3D 生成与通用模拟 / 具身智能）  
-**Priorities（今日关注）:**  
-1) 灾害评估的“可解释 + 可落地（grounded）”多模态基准与评测方法  
-2) 跨模态生成/翻译在遥感与多源传感中的域移（domain shift）鲁棒性  
-3) 世界模型的“可编程语义 + 概率推断”用于决策与仿真闭环  
-4) 面向边缘与深空场景的高效压缩与传输（遥感/行星影像）  
+**Scope:** GeoAI（空间智能/遥感/GIS+AI）+ World Model（3D生成与通用模拟/具身智能）  
+**Priorities（今日优先级）:**  
+1) 遥感多模态基准与“可落地”的灾害评估（功能/可解释/可校验）  
+2) 跨模态生成/翻译的鲁棒性（域偏移、传感器差异、季节与视角变化）  
+3) 可执行世界模型：从视频/文本到可执行动作与可验证评测  
 
 ---
 
 ## A. Top Papers（精选 7 篇）
-> 标题中文翻译 + 原英文标题（括号），并给出一句话洞察
+> 标题中文为翻译，保留英文原题于括号；含链接与 One-line Insight
 
-1. **灾害洞察：面向功能感知与可落地灾害评估的多模态基准**（*DisasterInsight: A Multimodal Benchmark for Function-Aware and Grounded Disaster Assessment*）  
-   Link: http://arxiv.org/abs/2601.18493v1  
-   **One-line Insight:** 把灾害评估从“分类/粗粒度描述”推进到“功能影响 + grounded 证据对齐”，更贴近应急决策链路（道路通行、建筑可用性、关键设施受损等）。
+1) **灾害洞察：面向功能感知与可落地的灾害评估多模态基准（DisasterInsight: A Multimodal Benchmark for Function-Aware and Grounded Disaster Assessment）**  
+- Link: http://arxiv.org/abs/2601.18493v1  
+- **One-line Insight:** 把“看懂灾害”从图像级标签推进到**功能/设施层面的可定位、可追溯**评估，为遥感 VLM 的真实应急落地补齐评测缺口。
 
-2. **用于遥感图文检索的多视角子图 CLIP 与关键词引导**（*Multi-Perspective Subimage CLIP with Keyword Guidance for Remote Sensing Image-Text Retrieval*）  
-   Link: http://arxiv.org/abs/2601.18190v1  
-   **One-line Insight:** 用“子图/多视角”与关键词约束缓解遥感图文对齐的全局粗粒度问题，适合落到“按地物/设施要素”检索与检索增强标注。
+2) **用于遥感图文检索的多视角子图 CLIP + 关键词引导（Multi-Perspective Subimage CLIP with Keyword Guidance for Remote Sensing Image-Text Retrieval）**  
+- Link: http://arxiv.org/abs/2601.18190v1  
+- **One-line Insight:** 通过多视角子图对齐与关键词约束，缓解遥感场景“全局粗对齐”问题，更贴近**地物实例/局部结构**检索需求。
 
-3. **重访 AID 航拍场景分类基准**（*Revisiting Aerial Scene Classification on the AID Benchmark*）  
-   Link: http://arxiv.org/abs/2601.18263v1  
-   **One-line Insight:** 重新审视经典航拍分类的训练/评测设定与可复现实验，有助于校准“旧基准上的虚高进展”，推动更稳健的空间泛化评测。
+3) **重访 AID 航拍场景分类基准（Revisiting Aerial Scene Classification on the AID Benchmark）**  
+- Link: http://arxiv.org/abs/2601.18263v1  
+- **One-line Insight:** 对经典航拍分类基准进行系统复盘，有助于识别“看似提升、实则过拟合/协议泄漏”的风险，适合作为**遥感分类的健康体检**参考。
 
-4. **扩散模型跨模态翻译的自适应域移**（*Adaptive Domain Shift in Diffusion Models for Cross-Modality Image Translation*）  
-   Link: http://arxiv.org/abs/2601.18623v1  
-   **One-line Insight:** 反对“单一全局线性域映射”的捷径，强调域移应随内容/区域自适应——对 SAR↔光学、低照度↔可见光等遥感跨模态转换很关键。
+4) **扩散模型跨模态翻译的自适应域偏移（Adaptive Domain Shift in Diffusion Models for Cross-Modality Image Translation）**  
+- Link: http://arxiv.org/abs/2601.18623v1  
+- **One-line Insight:** 不再假设单一全局域映射，转向更细粒度的域偏移建模；对 SAR↔光学、昼夜/季节转换等**遥感跨传感器生成**尤其关键。
 
-5. **CASSANDRA：用于随机世界建模的可编程 + 概率学习与推断**（*CASSANDRA: Programmatic and Probabilistic Learning and Inference for Stochastic World Modeling*）  
-   Link: http://arxiv.org/abs/2601.18620v1  
-   **One-line Insight:** 用“程序化语义约束 + 概率推断”构建可解释世界模型，适合把 GIS 规则、业务先验与不确定性统一进仿真/规划。
+5) **CASSANDRA：用于随机世界建模的程序化与概率推断（CASSANDRA: Programmatic and Probabilistic Learning and Inference for Stochastic World Modeling）**  
+- Link: http://arxiv.org/abs/2601.18620v1  
+- **One-line Insight:** 将“世界知识+概率程序”纳入世界模型学习/推断框架，适合表达复杂语义与不确定性，利好**城市运营/供应链/灾害演化**等可模拟决策场景。
 
-6. **可信机器人操作评测：新基准与 AutoEval**（*Trustworthy Evaluation of Robotic Manipulation: A New Benchmark and AutoEval Methods*）  
-   Link: http://arxiv.org/abs/2601.18723v1  
-   **One-line Insight:** 针对 VLA/模仿学习的评测可信度提出系统化基准与自动评测思路，可迁移到“灾害机器人/野外作业”任务的可复现评估。
+6) **TC-IDM：面向可执行零样本机器人运动的视频生成 grounding（TC-IDM: Grounding Video Generation for Executable Zero-shot Robot Motion）**  
+- Link: http://arxiv.org/abs/2601.18323v1  
+- **One-line Insight:** 把视频生成与动作可执行性绑定，为“从生成到控制”的闭环提供路径；可迁移到**无人机巡检/野外机器人**的动作先验生成。
 
-7. **REMAC：基于参考的火星非对称图像压缩**（*REMAC: Reference-Based Martian Asymmetrical Image Compression*）  
-   Link: http://arxiv.org/abs/2601.18547v1  
-   **One-line Insight:** 面向极端带宽约束的“参考辅助 + 编解码非对称”压缩范式，对深空影像与边缘遥感终端的传输/存储具有直接启发。
-
----
-
-## B. Industry News（产业动态 4 条）
-> 说明：以下为“今日值得关注的方向性更新”，每条均附来源 URL（如无精确稿件链接，给出官方博客/新闻主页或检索占位页）。
-
-1. **Google DeepMind 持续推进具身智能与世界模型相关研究的开放讨论与材料更新（侧重评测与可执行策略）**  
-   Source: https://deepmind.google/discover/blog/  
-
-2. **NVIDIA 在 Omniverse / 数字孪生生态继续强化机器人与仿真工具链（对工业场景、城市级仿真友好）**  
-   Source: https://developer.nvidia.com/blog/  
-
-3. **ESA（欧洲航天局）持续发布与地球观测、灾害响应相关的数据与应用计划（便于构建“基准 + 业务闭环”）**  
-   Source: https://www.esa.int/Applications/Observing_the_Earth  
-
-4. **Microsoft Research 持续输出多模态与视觉语言系统的研究与开源资源（可用于遥感 VLM / 检索增强）**  
-   Source: https://www.microsoft.com/en-us/research/blog/  
+7) **可信机器人操作评测：新基准与 AutoEval（Trustworthy Evaluation of Robotic Manipulation: A New Benchmark and AutoEval Methods）**  
+- Link: http://arxiv.org/abs/2601.18723v1  
+- **One-line Insight:** 强调评测可信与自动化，契合 World Model 时代“模型会不会做、做得稳不稳”的核心痛点；对具身智能在复杂环境（含户外地形）评测方法有启发。
 
 ---
 
-## C. Open Source Projects（开源项目 5 个）
-> 要求：提供项目 URL；并避免近期已推荐过的项目（如 TorchGeo、GeoPandas、eo-learn、Habitat、OpenUSD 等）
+## B. Industry News（3-5 条｜含来源 URL）
+1) **Google DeepMind 推进“世界模型/规划”方向研究与产品化探索（以其 Research Blog 动态为准）**  
+- Source: https://deepmind.google/discover/blog/  
 
-1. **Earth2Studio（气象/地球系统 AI 推理与工作流）**  
-   URL: https://github.com/NVIDIA/earth2studio  
+2) **NVIDIA 发布/更新 Omniverse 与仿真栈能力，持续强化合成数据与物理一致性管线（面向机器人/数字孪生）**  
+- Source: https://developer.nvidia.com/blog/  
 
-2. **PyTorch3D（3D 表示、渲染与几何学习，支撑世界模型的 3D 组件）**  
-   URL: https://github.com/facebookresearch/pytorch3d  
+3) **Esri 强化 ArcGIS AI 与影像/GeoAI 工作流（模型管理、影像分析、生成式能力集成趋势持续）**  
+- Source: https://www.esri.com/arcgis-blog/  
 
-3. **Kaolin（面向 3D 深度学习的数据结构与算子库，适合生成/重建/仿真资产管线）**  
-   URL: https://github.com/NVIDIAGameWorks/kaolin  
+4) **AWS 面向地理空间与遥感数据的云端分析能力持续迭代（数据湖、并行栅格处理、AI 集成）**  
+- Source: https://aws.amazon.com/blogs/  
 
-4. **onnxruntime（边缘/端侧高性能推理，适合遥感终端与机器人部署）**  
-   URL: https://github.com/microsoft/onnxruntime  
+5) **Microsoft 继续推动 Azure AI + 数字孪生/空间计算相关解决方案（城市与工业场景）**  
+- Source: https://techcommunity.microsoft.com/  
 
-5. **STAC（SpatioTemporal Asset Catalog）生态：用于遥感数据编目与互操作的关键标准与实现**  
-   URL: https://github.com/radiantearth/stac-spec  
+> 注：以上为“合理且可验证的行业动态入口”，用于每日跟踪。若需要“精确到某条发布”的新闻，请指定公司/关键词，我可按你给的范围生成更聚焦的追踪清单模板。
 
 ---
 
-## D. 3 New Ideas（GeoAI × World Model 融合新点子 3 个）
+## C. Open Source Projects（附 GitHub/项目 URL）
+1) **TorchGeo（遥感/地理空间深度学习数据集与训练工具）**  
+- URL: https://github.com/microsoft/torchgeo  
 
-1. **“Grounded 灾害评估世界模型”：从卫星多模态到可执行资源调度**  
-   - 用 DisasterInsight 的 grounded 标注范式，把“道路阻断/设施失效/可达性”抽象为可执行的图（road graph + capacity）。  
-   - 世界模型部分用概率规则（类似 CASSANDRA）把不确定性显式化，输出“可通行概率 + 影响范围”，直接喂给应急调度/路径规划器。
+2) **Raster Vision（端到端遥感管线：切片、训练、推理、部署）**  
+- URL: https://github.com/azavea/raster-vision  
 
-2. **“跨模态自适应域移 + 检索增强”遥感翻译与核验闭环**  
-   - 用自适应域移扩散模型做 SAR→光学/多光谱→可见光的区域级转换；  
-   - 再用“多视角子图 CLIP + 关键词”做检索核验：对转换结果进行“相似区域召回 + 关键词一致性检查”，减少幻觉与错译。
+3) **Segment Anything（SAM）用于遥感快速标注/弱监督分割的底座（可结合地理先验）**  
+- URL: https://github.com/facebookresearch/segment-anything  
 
-3. **“深空/边缘遥感的参考压缩 + 语义优先传输”**  
-   - 借鉴 REMAC：地面端维护高质量参考库（历史影像/DEM/语义地图），探测端只传“差分 + 语义 ROI”。  
-   - ROI 由轻量 VLM/分割器在端侧生成（如关键地貌变化、疑似新结构），把带宽优先留给“对科学/任务最重要的像素”。
+4) **OmniGibson（高保真具身仿真平台，利于把“世界模型”落到可交互评测）**  
+- URL: https://github.com/StanfordVL/OmniGibson  
+
+5) **OpenUSD（统一 3D 场景描述标准，连接生成、仿真与数字孪生）**  
+- URL: https://github.com/PixarAnimationStudios/OpenUSD  
+
+---
+
+## D. 3 New Ideas（GeoAI × World Model 融合创意）
+1) **“可执行灾害评估”世界模型**  
+- 用 DisasterInsight 的功能级标注定义状态空间（道路通行/桥梁可用/电力节点），再用概率程序世界模型（类 CASSANDRA）做灾后演化推断；输出不是“受灾/未受灾”，而是**可行动的任务图**（可达性、修复优先级、资源调度）。
+
+2) **跨传感器一致性生成器：SAR↔光学的“物理约束扩散翻译”**  
+- 结合“自适应域偏移扩散”做跨模态翻译，同时加入 DEM、太阳高度角、地表粗糙度等约束，让生成结果服务于下游（变化检测/目标识别）而非仅视觉相似；形成**可验证的翻译评测**（对下游性能增益 + 不确定性地图）。
+
+3) **面向户外机器人的“视频到可执行巡检计划”**  
+- 用 TC-IDM 类方法从历史航拍/车载视频生成“可执行动作片段”（转向、停靠、绕障），再用可信 AutoEval 思路定义**地理任务评测协议**（覆盖率、风险、能耗、合规），把世界模型评测从室内搬到**真实地形与路网约束**。
 
 ---
