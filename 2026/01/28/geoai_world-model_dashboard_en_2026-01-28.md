@@ -1,89 +1,93 @@
-# GeoAI + World Model Compact Dashboard
+# GeoAI + World Model Compact Dashboard  
 **Date:** 2026-01-28  
-**Scope:** GeoAI (Spatial Intelligence, Remote Sensing, GIS+AI) + World Models (3D Generation, Simulation, Embodied AI)  
-**Priorities (today):** Disaster assessment VLM benchmarks • Robust evaluation for embodied agents • Cross-modality translation for remote sensing • Programmatic/probabilistic world modeling • Data-efficient robot motion generation
+**Scope:** GeoAI (Spatial Intelligence, Remote Sensing, GIS+AI) + World Models (3D Generation, General Simulation, Embodied AI)  
+**Priorities (Today):**  
+1) Disaster-response multimodal grounding from satellite + text + functions  
+2) Reliable evaluation loops for VLA/robotics and “world-model-to-policy” pipelines  
+3) Cross-modality translation + retrieval to reduce labeling friction in geospatial domains  
 
 ---
 
-## A. Top Papers (Arxiv Picks)
+## A. Top Papers (Most Relevant 5–8)
 
 1) **DisasterInsight: A Multimodal Benchmark for Function-Aware and Grounded Disaster Assessment**  
-   Link: http://arxiv.org/abs/2601.18493v1 (2026-01-26)  
-   **One-line Insight:** Moves remote-sensing VLM evaluation beyond coarse labels toward *grounded*, function-aware disaster interpretation—useful for actionable damage and capability mapping.
+   Link: http://arxiv.org/abs/2601.18493v1  
+   **One-line Insight:** Pushes remote-sensing VLM evaluation beyond coarse labels toward *grounded, function-aware* disaster understanding—useful for actionable damage + accessibility assessment.
 
-2) **Adaptive Domain Shift in Diffusion Models for Cross-Modality Image Translation**  
-   Link: http://arxiv.org/abs/2601.18623v1 (2026-01-26)  
-   **One-line Insight:** Replaces a single “global” domain mapping with adaptive shift—relevant to SAR↔optical, day↔night, seasonal, and sensor-to-sensor translation workflows in GeoAI.
+2) **Multi-Perspective Subimage CLIP with Keyword Guidance for Remote Sensing Image-Text Retrieval**  
+   Link: http://arxiv.org/abs/2601.18190v1  
+   **One-line Insight:** Improves RS image–text retrieval by combining subimage/multi-view matching with keyword guidance—practical for geospatial search, cataloging, and weak supervision.
 
-3) **CASSANDRA: Programmatic and Probabilistic Learning and Inference for Stochastic World Modeling**  
-   Link: http://arxiv.org/abs/2601.18620v1 (2026-01-26)  
-   **One-line Insight:** Combines programmatic structure with probabilistic inference for stochastic world models—an appealing template for *causal-ish* geospatial simulators and decision support.
+3) **Adaptive Domain Shift in Diffusion Models for Cross-Modality Image Translation**  
+   Link: http://arxiv.org/abs/2601.18623v1  
+   **One-line Insight:** Replaces a single global transfer with adaptive shifts—relevant for SAR↔optical, daytime↔nighttime, and sensor-to-sensor translation without brittle assumptions.
 
-4) **TC-IDM: Grounding Video Generation for Executable Zero-shot Robot Motion**  
-   Link: http://arxiv.org/abs/2601.18323v1 (2026-01-26)  
-   **One-line Insight:** Uses grounded video generation as a bridge to executable motion, pointing to a scalable path for “world-model-to-policy” transfer with less robot-specific data.
+4) **Revisiting Aerial Scene Classification on the AID Benchmark**  
+   Link: http://arxiv.org/abs/2601.18263v1  
+   **One-line Insight:** Re-examines a canonical aerial benchmark—useful as a “sanity check” paper for dataset bias, protocol drift, and modern backbone evaluation in RS classification.
 
 5) **Trustworthy Evaluation of Robotic Manipulation: A New Benchmark and AutoEval Methods**  
-   Link: http://arxiv.org/abs/2601.18723v1 (2026-01-26)  
-   **One-line Insight:** Pushes toward standardized, automated evaluation for VLA manipulation—conceptually aligned with the need for *trustworthy* evaluation of geo-foundation models.
+   Link: http://arxiv.org/abs/2601.18723v1  
+   **One-line Insight:** Introduces more trustworthy manipulation evaluation and automated scoring—relevant for validating embodied “world model → action” systems beyond cherry-picked demos.
 
-6) **Beyond Static Datasets: Robust Offline Policy Optimization via Vetted Synthetic Transitions**  
-   Link: http://arxiv.org/abs/2601.18107v1 (2026-01-26)  
-   **One-line Insight:** “Vetted” synthetic transitions offer a pragmatic route to stronger offline RL—relevant to training embodied agents in simulators before limited real-world deployment.
+6) **TC-IDM: Grounding Video Generation for Executable Zero-shot Robot Motion**  
+   Link: http://arxiv.org/abs/2601.18323v1  
+   **One-line Insight:** Uses video generation as an intermediate grounding to produce executable motion—suggests a path to convert *generative world dynamics* into controllable plans.
 
-7) **Multi-Perspective Subimage CLIP with Keyword Guidance for Remote Sensing Image-Text Retrieval**  
-   Link: http://arxiv.org/abs/2601.18190v1 (2026-01-26)  
-   **One-line Insight:** Tackles fine-grained alignment (subimage + keyword guidance), helpful for map search, change discovery, and “find me airports with construction” style retrieval.
+7) **CASSANDRA: Programmatic and Probabilistic Learning and Inference for Stochastic World Modeling**  
+   Link: http://arxiv.org/abs/2601.18620v1  
+   **One-line Insight:** Programmatic + probabilistic world models help encode semantics and uncertainty—aligns with “geo-world models” where rules, events, and interventions matter.
+
+8) **Beyond Static Datasets: Robust Offline Policy Optimization via Vetted Synthetic Transitions**  
+   Link: http://arxiv.org/abs/2601.18107v1  
+   **One-line Insight:** Improves offline RL by adding *vetted synthetic transitions*—a concrete mechanism to use simulators/world models while controlling compounding errors.
 
 ---
 
 ## B. Industry News (3–5 items, with sources)
 
-1) **Esri highlights deeper GeoAI patterns for ArcGIS workflows (foundation models, raster analytics, AI-assisted mapping).**  
-   Source: https://www.esri.com/arcgis-blog/
-
-2) **Google DeepMind shares new research updates on embodied agents and world-model learning for planning.**  
+1) **Google DeepMind updates Gemini Robotics direction with broader partner messaging around VLA-style generalist control.**  
    Source: https://deepmind.google/discover/blog/
 
-3) **NVIDIA posts new Omniverse / simulation tooling updates aimed at robotics and synthetic-data generation.**  
+2) **NVIDIA highlights continued “physical AI / world simulation” positioning for robotics and digital twins (Omniverse + robotics stack).**  
    Source: https://developer.nvidia.com/blog/
 
-4) **Microsoft Research publishes new work on multimodal agents and evaluation practices for agentic systems.**  
-   Source: https://www.microsoft.com/en-us/research/blog/
+3) **Esri emphasizes expanded AI assistants and geospatial analytics workflows across ArcGIS (packaging LLMs into GIS operations).**  
+   Source: https://www.esri.com/arcgis-blog/
 
-5) **Planet Labs updates resources for rapid satellite-driven monitoring and analytics for events and change detection.**  
-   Source: https://www.planet.com/pulse/
-
----
-
-## C. Open Source Projects (with URLs)
-
-1) **TorchGeo** — PyTorch datasets/models/utilities for geospatial ML (remote sensing, tiling, sampling).  
-   https://github.com/microsoft/torchgeo
-
-2) **Raster Vision** — End-to-end pipeline for satellite/aerial imagery (chips, training, inference, eval).  
-   https://github.com/azavea/raster-vision
-
-3) **OpenMMLab MMSegmentation** — Strong semantic segmentation toolbox; widely used for RS segmentation baselines.  
-   https://github.com/open-mmlab/mmsegmentation
-
-4) **CesiumJS** — 3D geospatial visualization engine; useful front-end for world-model/scene digital twins.  
-   https://github.com/CesiumGS/cesium
-
-5) **Habitat-Sim** — Embodied AI simulator for navigation and agent evaluation; adaptable to “geo-indoors” tasks.  
-   https://github.com/facebookresearch/habitat-sim
+4) **Microsoft revisits Planetary-scale geospatial analytics and AI integration patterns via Azure data + model hosting guidance.**  
+   Source: https://azure.microsoft.com/en-us/blog/  
 
 ---
 
-## D. 3 New Ideas (GeoAI × World Models)
+## C. Open Source Projects (with URLs; not repeating recently featured ones)
 
-1) **“Disaster World Model” for action-grounded damage assessment**  
-   Use *DisasterInsight*-style grounding to train a model that predicts not only labels (flooded/building-damaged) but **functional affordances** (road passability, landing zones, shelter capacity) inside a lightweight simulator for response planning.
+1) **EOxServer (OGC services for Earth observation data)** — Host and serve EO data with standards-based APIs; useful for operational GeoAI pipelines.  
+   https://github.com/EOxServer/eoxserver
 
-2) **Cross-sensor diffusion translator as a simulator adapter**  
-   Apply adaptive domain shift diffusion to translate between **simulated renders ↔ real satellite modalities** (SAR/optical/thermal), making synthetic-data pipelines more robust for change detection and VLM grounding.
+2) **OpenDroneMap (ODM)** — End-to-end photogrammetry (orthomosaic/DSM/point clouds) feeding 3D world models and mapping.  
+   https://github.com/OpenDroneMap/ODM
 
-3) **Programmatic stochastic geo-sim with CASSANDRA-like structure**  
-   Build a **probabilistic, rule-augmented world model** over geospatial entities (roads, powerlines, rivers, land use) where interventions (storm, policy change, construction) produce stochastic outcomes—then train planners/offline RL on vetted synthetic transitions.
+3) **PDAL (Point Data Abstraction Library)** — Industrial-grade point cloud processing for LiDAR → 3D mapping → simulation assets.  
+   https://github.com/PDAL/PDAL
+
+4) **MapLibre GL JS** — High-performance open map rendering for interactive GeoAI dashboards and spatial debugging.  
+   https://github.com/maplibre/maplibre-gl-js
+
+5) **Sionna (simulation library for wireless channels, ray tracing)** — Useful to couple 3D world models with comms constraints (UAV/robot connectivity).  
+   https://github.com/NVlabs/sionna
+
+---
+
+## D. 3 New Ideas (GeoAI × World Model Fusion)
+
+1) **Function-aware disaster “task map” world model**  
+   Build a world model that outputs *affordance layers* (passable roads, reachable buildings, functional hospitals) from satellite + VLM grounding (inspired by DisasterInsight), then plan response logistics under uncertainty.
+
+2) **Cross-sensor diffusion as synthetic data engine for retrieval + segmentation**  
+   Use adaptive domain-shift diffusion to translate between modalities (e.g., SAR→optical-like) and generate paired data to train retrieval/segmentation models with controlled “style knobs” (incidence angle, season, haze).
+
+3) **Geo-conditioned offline RL with vetted synthetic transitions**  
+   Combine a city-scale 3D sim (meshes/point clouds) with offline logs from delivery/inspection robots; generate synthetic transitions only where a learned geo-world model is confident, improving safety and transfer.
 
 ---
