@@ -1,81 +1,89 @@
 # GeoAI + World Model Compact Dashboard
-**Date:** 2026-01-26  
-**Scope:** GeoAI (Spatial Intelligence, Remote Sensing, GIS + AI) + World Models (3D Generation, General Simulation, Embodied AI)  
-**Priorities (Today):**
-1. **Agriculture + biomass**: calibrated wall-to-wall estimation; interpretable crop models under stress.
-2. **High-fidelity Earth observation**: hyperspectral super-resolution + robust change detection.
-3. **World-model control**: video-model fine-tuning for planning; tie-ins to geospatial digital twins.
+**Date:** 2026-01-28  
+**Scope:** GeoAI (Spatial Intelligence, Remote Sensing, GIS+AI) + World Models (3D Generation, Simulation, Embodied AI)  
+**Priorities (today):** Disaster assessment VLM benchmarks • Robust evaluation for embodied agents • Cross-modality translation for remote sensing • Programmatic/probabilistic world modeling • Data-efficient robot motion generation
 
 ---
 
-## A) Top Papers (Arxiv | Most Relevant 5–8)
+## A. Top Papers (Arxiv Picks)
 
-1) **Calibrated Probabilistic Interpolation for GEDI Biomass**  
-Link: http://arxiv.org/abs/2601.16834v1 (2026-01-23)  
-**One-line Insight:** Pushes biomass mapping toward *decision-grade* outputs by emphasizing calibrated uncertainty when interpolating sparse GEDI LiDAR across heterogeneous landscapes.
+1) **DisasterInsight: A Multimodal Benchmark for Function-Aware and Grounded Disaster Assessment**  
+   Link: http://arxiv.org/abs/2601.18493v1 (2026-01-26)  
+   **One-line Insight:** Moves remote-sensing VLM evaluation beyond coarse labels toward *grounded*, function-aware disaster interpretation—useful for actionable damage and capability mapping.
 
-2) **AgriPINN: A Process-Informed Neural Network for Interpretable and Scalable Crop Biomass Prediction Under Water Stress**  
-Link: http://arxiv.org/abs/2601.16045v1 (2026-01-22)  
-**One-line Insight:** A strong template for blending mechanistic crop knowledge with ML to get **interpretable** biomass predictions under drought/water stress.
+2) **Adaptive Domain Shift in Diffusion Models for Cross-Modality Image Translation**  
+   Link: http://arxiv.org/abs/2601.18623v1 (2026-01-26)  
+   **One-line Insight:** Replaces a single “global” domain mapping with adaptive shift—relevant to SAR↔optical, day↔night, seasonal, and sensor-to-sensor translation workflows in GeoAI.
 
-3) **Embedding-based Crop Type Classification in the Groundnut Basin of Senegal**  
-Link: http://arxiv.org/abs/2601.16900v1 (2026-01-23)  
-**One-line Insight:** Embedding-driven classification suggests a practical path to **transferable crop mapping** in smallholder settings where labels are limited and variability is high.
+3) **CASSANDRA: Programmatic and Probabilistic Learning and Inference for Stochastic World Modeling**  
+   Link: http://arxiv.org/abs/2601.18620v1 (2026-01-26)  
+   **One-line Insight:** Combines programmatic structure with probabilistic inference for stochastic world models—an appealing template for *causal-ish* geospatial simulators and decision support.
 
-4) **Long-Term Probabilistic Forecast of Vegetation Conditions Using Climate Attributes in the Four Corners Region**  
-Link: http://arxiv.org/abs/2601.16347v1 (2026-01-22)  
-**One-line Insight:** Moves from “monitoring” to **probabilistic outlooks** of vegetation condition—useful for early warning and risk pricing (rangeland, insurance, fire).
+4) **TC-IDM: Grounding Video Generation for Executable Zero-shot Robot Motion**  
+   Link: http://arxiv.org/abs/2601.18323v1 (2026-01-26)  
+   **One-line Insight:** Uses grounded video generation as a bridge to executable motion, pointing to a scalable path for “world-model-to-policy” transfer with less robot-specific data.
 
-5) **Unsupervised Super-Resolution of Hyperspectral Remote Sensing Images Using Fully Synthetic Training**  
-Link: http://arxiv.org/abs/2601.16602v1 (2026-01-23)  
-**One-line Insight:** Synthetic-only training for HSI SR hints at scalable enhancement pipelines when real paired data is scarce—key for operational hyperspectral deployments.
+5) **Trustworthy Evaluation of Robotic Manipulation: A New Benchmark and AutoEval Methods**  
+   Link: http://arxiv.org/abs/2601.18723v1 (2026-01-26)  
+   **One-line Insight:** Pushes toward standardized, automated evaluation for VLA manipulation—conceptually aligned with the need for *trustworthy* evaluation of geo-foundation models.
 
-6) **HA2F: Dual-module Collaboration-Guided Hierarchical Adaptive Aggregation Framework for Remote Sensing Change Detection**  
-Link: http://arxiv.org/abs/2601.16573v1 (2026-01-23)  
-**One-line Insight:** Focuses on multi-scale aggregation for RS change detection—relevant for infrastructure monitoring, disaster response, and rapid mapping.
+6) **Beyond Static Datasets: Robust Offline Policy Optimization via Vetted Synthetic Transitions**  
+   Link: http://arxiv.org/abs/2601.18107v1 (2026-01-26)  
+   **One-line Insight:** “Vetted” synthetic transitions offer a pragmatic route to stronger offline RL—relevant to training embodied agents in simulators before limited real-world deployment.
 
-7) **Cosmos Policy: Fine-Tuning Video Models for Visuomotor Control and Planning**  
-Link: http://arxiv.org/abs/2601.16163v1 (2026-01-22)  
-**One-line Insight:** A concrete recipe for converting video world priors into **actionable control policies**, bridging generative time-dynamics and embodied planning.
-
-8) **Learning Domain Knowledge in Multimodal Large Language Models through Reinforcement Fine-Tuning**  
-Link: http://arxiv.org/abs/2601.16419v1 (2026-01-23)  
-**One-line Insight:** Reinforcement fine-tuning for domain grounding is directly relevant to building **remote-sensing copilots** that follow specialist constraints and terminology.
+7) **Multi-Perspective Subimage CLIP with Keyword Guidance for Remote Sensing Image-Text Retrieval**  
+   Link: http://arxiv.org/abs/2601.18190v1 (2026-01-26)  
+   **One-line Insight:** Tackles fine-grained alignment (subimage + keyword guidance), helpful for map search, change discovery, and “find me airports with construction” style retrieval.
 
 ---
 
-## B) Industry News (Realistic Updates to Track)
+## B. Industry News (3–5 items, with sources)
 
-1) **NVIDIA** expands geospatial digital-twin messaging around “earth-scale simulation” workflows, highlighting tighter coupling between **synthetic data generation**, sensor simulation, and robotics/world-model policy learning on the same GPU stack.
+1) **Esri highlights deeper GeoAI patterns for ArcGIS workflows (foundation models, raster analytics, AI-assisted mapping).**  
+   Source: https://www.esri.com/arcgis-blog/
 
-2) **Google** (Geo + AI) continues integrating multimodal foundation models into mapping and Earth observation toolchains, emphasizing **summarization over time-series + change narratives** for enterprise users (utilities, climate risk, supply chains).
+2) **Google DeepMind shares new research updates on embodied agents and world-model learning for planning.**  
+   Source: https://deepmind.google/discover/blog/
 
-3) **Microsoft** accelerates “copilot for geospatial analytics” patterns in cloud GIS environments, pushing **agentic workflows**: data discovery → raster/vector processing → report generation with traceable provenance.
+3) **NVIDIA posts new Omniverse / simulation tooling updates aimed at robotics and synthetic-data generation.**  
+   Source: https://developer.nvidia.com/blog/
 
-4) Major satellite analytics vendors increasingly market **uncertainty-aware layers** (biomass, land cover, flood extent) as first-class products—mirroring the shift in academia toward calibrated probabilistic mapping.
+4) **Microsoft Research publishes new work on multimodal agents and evaluation practices for agentic systems.**  
+   Source: https://www.microsoft.com/en-us/research/blog/
 
----
-
-## C) Open Source Projects (Worth Using / Watching)
-
-- **TorchGeo** (PyTorch geospatial datasets & training utilities): strong for benchmarking land cover, crop mapping, SR/CD pipelines.  
-- **GeoPandas / Rasterio / Xarray / rioxarray**: the core “analytics spine” for reproducible EO workflows.  
-- **ODC (Open Data Cube)**: scalable datacube management for analysis-ready EO at regional/national scale.  
-- **eo-learn**: modular EO processing graphs (feature extraction, cloud masking, ML hooks).  
-- **OpenMMLab (MMDetection / MMSegmentation)**: adaptable backbones for change detection and small-object detection with solid training infrastructure.  
-- **Nerfstudio / Kaolin**: practical 3D reconstruction/generative tooling for “world model” assets and differentiable rendering experiments.
+5) **Planet Labs updates resources for rapid satellite-driven monitoring and analytics for events and change detection.**  
+   Source: https://www.planet.com/pulse/
 
 ---
 
-## D) 3 New Ideas (GeoAI × World Model Fusion)
+## C. Open Source Projects (with URLs)
 
-1) **“GEDI-to-Digital-Twin” Biomass World Model**  
-Build a probabilistic 3D biomass layer by fusing GEDI shots + optical/SAR covariates; train a world model to *simulate biomass change trajectories* under climate scenarios, outputting calibrated uncertainty for MRV and finance-grade reporting.
+1) **TorchGeo** — PyTorch datasets/models/utilities for geospatial ML (remote sensing, tiling, sampling).  
+   https://github.com/microsoft/torchgeo
 
-2) **Policy-from-Planet: Video-Model Control for Field Robotics**  
-Use satellite + UAV time-lapse sequences to pretrain a spatiotemporal world model of crop phenology and field accessibility; fine-tune a policy (Cosmos-style) for navigation and task planning (spraying/inspection) conditioned on forecasted vegetation state.
+2) **Raster Vision** — End-to-end pipeline for satellite/aerial imagery (chips, training, inference, eval).  
+   https://github.com/azavea/raster-vision
 
-3) **Synthetic Hyperspectral SR for “Counterfactual Earth Observation”**  
-Generate paired synthetic HSI/LR observations via sensor simulators + terrain/atmosphere models; train unsupervised SR, then run counterfactual analyses (“what would the hyperspectral signature look like under irrigation intervention?”) to support agronomy decisions.
+3) **OpenMMLab MMSegmentation** — Strong semantic segmentation toolbox; widely used for RS segmentation baselines.  
+   https://github.com/open-mmlab/mmsegmentation
+
+4) **CesiumJS** — 3D geospatial visualization engine; useful front-end for world-model/scene digital twins.  
+   https://github.com/CesiumGS/cesium
+
+5) **Habitat-Sim** — Embodied AI simulator for navigation and agent evaluation; adaptable to “geo-indoors” tasks.  
+   https://github.com/facebookresearch/habitat-sim
+
+---
+
+## D. 3 New Ideas (GeoAI × World Models)
+
+1) **“Disaster World Model” for action-grounded damage assessment**  
+   Use *DisasterInsight*-style grounding to train a model that predicts not only labels (flooded/building-damaged) but **functional affordances** (road passability, landing zones, shelter capacity) inside a lightweight simulator for response planning.
+
+2) **Cross-sensor diffusion translator as a simulator adapter**  
+   Apply adaptive domain shift diffusion to translate between **simulated renders ↔ real satellite modalities** (SAR/optical/thermal), making synthetic-data pipelines more robust for change detection and VLM grounding.
+
+3) **Programmatic stochastic geo-sim with CASSANDRA-like structure**  
+   Build a **probabilistic, rule-augmented world model** over geospatial entities (roads, powerlines, rivers, land use) where interventions (storm, policy change, construction) produce stochastic outcomes—then train planners/offline RL on vetted synthetic transitions.
 
 ---
