@@ -1,0 +1,21 @@
+# Ignore everything by default
+*
+
+# Allow directories to be traversed
+!*/
+
+# Explicitly allow ONLY these specific items
+!README.md
+!2026/
+!2026/**
+!.gitignore
+
+# Explicitly ignore everything else (double safety)
+AGENTS.md
+*.py
+*.sh
+*.json
+*.log
+*.jpg
+temp/
+docs/
