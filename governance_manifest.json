@@ -1,0 +1,177 @@
+{
+  "project": "ST-dailyreport",
+  "production_entry": "run_daily_schedule.bat",
+  "scheduled_commands": [
+    "python run_daily_report.py",
+    "python git_push.py",
+    "python daily_task_win.py"
+  ],
+  "scheduled_preflight": {
+    "command": "python tools\\health_check.py",
+    "skip_env": "SKIP_GOVERNANCE_HEALTH_CHECK"
+  },
+  "active_source": [
+    "run_daily_schedule.bat",
+    "run_daily_report.py",
+    "git_push.py",
+    "daily_task_win.py",
+    "path_utils.py",
+    "wechat_sync.py",
+    "auto_generate_ai.py",
+    "arxiv_fetcher.py",
+    "news_fetcher.py",
+    "rss_news_fetcher.py",
+    "robust_fetch.py",
+    "history_db.py",
+    "history_tracker.py",
+    "config/footer_intro.md",
+    "config/cover.jpg",
+    "config/时空智能群管理员.jpg"
+  ],
+  "local_runtime_state": [
+    "config/config_secret.json",
+    "runtime/state/history.db",
+    "runtime/state/history.json",
+    "runtime/logs/daily_schedule.log",
+    "runtime/logs/daily_task.log",
+    "runtime/logs/auto_generate_ai.log"
+  ],
+  "source_directories": [
+    "config/"
+  ],
+  "generated_outputs": [
+    "2026/",
+    "runtime/",
+    "temp/",
+    "temp_backup/",
+    "restore_tmp/",
+    "__pycache__/",
+    "runtime/exports/temp_debug.html"
+  ],
+  "legacy_candidates": [],
+  "archived_scripts": [
+    "legacy/root_scripts/2026-05-09/daily_task.py",
+    "legacy/root_scripts/2026-05-09/auto_generate_draft.py",
+    "legacy/root_scripts/2026-05-09/run_all_tasks.bat",
+    "legacy/root_scripts/2026-05-09/run_daily.sh",
+    "legacy/root_scripts/2026-05-09/run_auto.sh",
+    "legacy/root_scripts/2026-05-09/install_daily_task.sh"
+  ],
+  "archive_directories": [
+    "legacy/"
+  ],
+  "reserved_empty_directories": [
+    "docs/"
+  ],
+  "operations_files": [
+    "GOVERNANCE.md",
+    "governance_manifest.json",
+    "tools/",
+    "README.md",
+    "README_SETUP.md",
+    "AGENTS.md",
+    "TODO.md",
+    "setup_windows_task.ps1"
+  ],
+  "never_commit": [
+    "config/config_secret.json",
+    "runtime/state/history.db",
+    "runtime/state/history.json",
+    "runtime/",
+    "*.log"
+  ],
+  "script_dispositions": {
+    "run_daily_schedule.bat": {
+      "action": "keep_active",
+      "reason": "Windows scheduled task entry point."
+    },
+    "run_daily_report.py": {
+      "action": "keep_active",
+      "reason": "Generates the daily report in the scheduled task."
+    },
+    "git_push.py": {
+      "action": "keep_active",
+      "reason": "Pushes generated reports in the scheduled task."
+    },
+    "daily_task_win.py": {
+      "action": "keep_active",
+      "reason": "Windows-native WeChat sync step used by the scheduled task."
+    },
+    "path_utils.py": {
+      "action": "keep_active",
+      "reason": "Shared path resolver for config and runtime-state migration."
+    },
+    "wechat_sync.py": {
+      "action": "keep_active",
+      "reason": "Active Markdown-to-WeChat draft publisher for the daily report."
+    },
+    "auto_generate_ai.py": {
+      "action": "keep_active",
+      "reason": "LLM report generation implementation used by run_daily_report.py."
+    },
+    "arxiv_fetcher.py": {
+      "action": "keep_active",
+      "reason": "Paper fetcher used by the active report generation path."
+    },
+    "news_fetcher.py": {
+      "action": "keep_active",
+      "reason": "News fetcher used by the active report generation path."
+    },
+    "rss_news_fetcher.py": {
+      "action": "keep_active",
+      "reason": "RSS fallback used by news_fetcher.py."
+    },
+    "robust_fetch.py": {
+      "action": "keep_active",
+      "reason": "Shared HTTP retry helper used by active fetchers."
+    },
+    "history_db.py": {
+      "action": "keep_active",
+      "reason": "SQLite history state used by active report generation."
+    },
+    "history_tracker.py": {
+      "action": "keep_transitive",
+      "reason": "Still imported by news_fetcher.py; do not archive until that dependency is removed."
+    },
+    "daily_task.py": {
+      "action": "archived",
+      "status": "archived",
+      "archive_path": "legacy/root_scripts/2026-05-09/daily_task.py",
+      "reason": "Older non-Windows workflow; scheduled task uses daily_task_win.py."
+    },
+    "auto_generate_draft.py": {
+      "action": "archived",
+      "status": "archived",
+      "archive_path": "legacy/root_scripts/2026-05-09/auto_generate_draft.py",
+      "reason": "Early draft generator; active generation uses run_daily_report.py and auto_generate_ai.py."
+    },
+    "run_all_tasks.bat": {
+      "action": "archived",
+      "status": "archived",
+      "archive_path": "legacy/root_scripts/2026-05-09/run_all_tasks.bat",
+      "reason": "Older batch entry; active scheduler uses run_daily_schedule.bat."
+    },
+    "run_daily.sh": {
+      "action": "archived",
+      "status": "archived",
+      "archive_path": "legacy/root_scripts/2026-05-09/run_daily.sh",
+      "reason": "Shell entry not used by the Windows scheduled task."
+    },
+    "run_auto.sh": {
+      "action": "archived",
+      "status": "archived",
+      "archive_path": "legacy/root_scripts/2026-05-09/run_auto.sh",
+      "reason": "Shell entry not used by the Windows scheduled task."
+    },
+    "install_daily_task.sh": {
+      "action": "archived",
+      "status": "archived",
+      "archive_path": "legacy/root_scripts/2026-05-09/install_daily_task.sh",
+      "reason": "Legacy shell installer; Windows scheduler setup uses setup_windows_task.ps1."
+    },
+    "setup_windows_task.ps1": {
+      "action": "keep_operations",
+      "reason": "Operational task setup script."
+    }
+  }
+}
