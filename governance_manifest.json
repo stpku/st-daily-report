@@ -16,14 +16,18 @@
     "git_push.py",
     "daily_task_win.py",
     "path_utils.py",
+    "log.py",
     "wechat_sync.py",
     "auto_generate_ai.py",
+    "llm_client.py",
+    "report_utils.py",
+    "report_prompting.py",
+    "report_history_extraction.py",
     "arxiv_fetcher.py",
     "news_fetcher.py",
     "rss_news_fetcher.py",
     "robust_fetch.py",
     "history_db.py",
-    "history_tracker.py",
     "config/footer_intro.md",
     "config/cover.jpg",
     "config/时空智能群管理员.jpg"
@@ -39,12 +43,19 @@
   "source_directories": [
     "config/"
   ],
+  "reference_directories": [
+    "docs/"
+  ],
+  "active_regression_tests": [
+    "tests/"
+  ],
   "generated_outputs": [
     "2026/",
     "runtime/",
     "temp/",
     "temp_backup/",
     "restore_tmp/",
+    ".pytest_cache/",
     "__pycache__/",
     "runtime/exports/temp_debug.html"
   ],
@@ -55,23 +66,24 @@
     "legacy/root_scripts/2026-05-09/run_all_tasks.bat",
     "legacy/root_scripts/2026-05-09/run_daily.sh",
     "legacy/root_scripts/2026-05-09/run_auto.sh",
-    "legacy/root_scripts/2026-05-09/install_daily_task.sh"
+    "legacy/root_scripts/2026-05-09/install_daily_task.sh",
+    "legacy/root_scripts/2026-05-10/history_tracker.py"
   ],
   "archive_directories": [
     "legacy/"
   ],
-  "reserved_empty_directories": [
-    "docs/"
-  ],
+  "reserved_empty_directories": [],
   "operations_files": [
     "GOVERNANCE.md",
     "governance_manifest.json",
     "tools/",
+    "docs/operations/DAILYREPORT_DIAGNOSIS.md",
     "README.md",
     "README_SETUP.md",
     "AGENTS.md",
     "TODO.md",
-    "setup_windows_task.ps1"
+    "setup_windows_task.ps1",
+    "requirements.txt"
   ],
   "never_commit": [
     "config/config_secret.json",
@@ -99,7 +111,11 @@
     },
     "path_utils.py": {
       "action": "keep_active",
-      "reason": "Shared path resolver for config and runtime-state migration."
+      "reason": "Shared path resolver and config loader."
+    },
+    "log.py": {
+      "action": "keep_active",
+      "reason": "Centralised logging configuration replacing print() across modules."
     },
     "wechat_sync.py": {
       "action": "keep_active",
@@ -107,7 +123,23 @@
     },
     "auto_generate_ai.py": {
       "action": "keep_active",
-      "reason": "LLM report generation implementation used by run_daily_report.py."
+      "reason": "Backward-compatible facade re-exporting from llm_client and report_utils. Used by run_daily_report.py."
+    },
+    "llm_client.py": {
+      "action": "keep_active",
+      "reason": "LLM API multi-provider rotation logic extracted from auto_generate_ai.py."
+    },
+    "report_utils.py": {
+      "action": "keep_active",
+      "reason": "Report output utilities (path building, saving, link validation, network detection) extracted from auto_generate_ai.py."
+    },
+    "report_prompting.py": {
+      "action": "keep_active",
+      "reason": "Prompt and language configuration helpers used by the active report generation path."
+    },
+    "report_history_extraction.py": {
+      "action": "keep_active",
+      "reason": "Content extraction helpers for updating paper, project, and news history from generated reports."
     },
     "arxiv_fetcher.py": {
       "action": "keep_active",
@@ -130,8 +162,10 @@
       "reason": "SQLite history state used by active report generation."
     },
     "history_tracker.py": {
-      "action": "keep_transitive",
-      "reason": "Still imported by news_fetcher.py; do not archive until that dependency is removed."
+      "action": "archived",
+      "status": "archived",
+      "archive_path": "legacy/root_scripts/2026-05-10/history_tracker.py",
+      "reason": "JSON-based history tracker replaced by history_db.py (SQLite). Zero imports found across active source."
     },
     "daily_task.py": {
       "action": "archived",

@@ -2,6 +2,7 @@ import datetime
 import xml.etree.ElementTree as ET
 from typing import List, Tuple
 
+from log import logger
 from robust_fetch import robust_get
 
 
@@ -54,6 +55,12 @@ def _score_news(item: dict, source_authority: float) -> float:
     else:
         kw_score = 0.0
 
+    # Hard gate: zero keyword hits → score 0 regardless of recency/authority.
+    # Prevents weakly-related items (e.g., GeForce NOW, general tech news) from
+    # entering the candidate pool on recency alone.
+    if high == 0 and med == 0:
+        return 0.0
+
     recency = 0.5
     dstr = item.get("date") or ""
     try:
@@ -76,7 +83,7 @@ def fetch_rss_news(max_items: int = 10, use_domestic: bool = False) -> List[dict
     all_items: List[dict] = []
     for url, authority in feeds:
         try:
-            print(f"Fetching RSS feed: {url}")
+            logger.info("Fetching RSS feed: %s", url)
             resp = robust_get(url, timeout=10)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
@@ -96,10 +103,10 @@ def fetch_rss_news(max_items: int = 10, use_domestic: bool = False) -> List[dict
                 news["importance_score"] = _score_news(news, authority)
                 all_items.append(news)
                 if len(all_items) >= max_items * 2:
-                    print(f"Collected {len(all_items)} items, stopping feed fetch")
+                    logger.debug("Collected %d items, stopping feed fetch", len(all_items))
                     break
         except Exception as e:
-            print(f"Failed to fetch RSS feed {url}: {e}")
+            logger.warning("Failed to fetch RSS feed %s: %s", url, e)
             continue
 
     all_items.sort(key=lambda x: x.get("importance_score", 0.0), reverse=True)

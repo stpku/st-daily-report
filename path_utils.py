@@ -1,5 +1,7 @@
+import json
+import logging
 import os
-
+import sys
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(ROOT_DIR, "config")
@@ -36,3 +38,16 @@ def resolve_path(preferred: str, legacy: str | None = None) -> str:
         if os.path.exists(candidate):
             return candidate
     return preferred
+
+
+def load_config() -> dict:
+    """Load and return the secret config dict. Exits on missing/invalid file."""
+    config_file = resolve_path(
+        config_path("config_secret.json"),
+        os.path.join(ROOT_DIR, "config_secret.json"),
+    )
+    if not os.path.exists(config_file):
+        logging.error("Configuration file not found at %s", config_file)
+        sys.exit(1)
+    with open(config_file, "r", encoding="utf-8") as f:
+        return json.load(f)

@@ -191,6 +191,106 @@ def _python_references(content: str, candidate_name: str, candidate_stem: str) -
     return reasons
 
 
+def _check_gitignore_blocks(manifest: dict, strict: bool) -> int:
+    """Verify that every active_source file is NOT blocked by .gitignore.
+
+    Uses ``git check-ignore`` to test each path.  A path that is ignored
+    would be silently excluded from ``git push``, breaking the repo on a
+    clean clone.
+    """
+    gitignore_path = ROOT / ".gitignore"
+    if not gitignore_path.exists():
+        print("WARN: .gitignore not found — skipping gitignore cross-check")
+        return 0
+
+    active_source = manifest.get("active_source", [])
+    if not active_source:
+        return 0
+
+    # Build the list of concrete files (skip directories / globs)
+    candidates: list[str] = []
+    for rel in active_source:
+        normalized = rel.replace("\\", "/")
+        if normalized.endswith("/"):
+            continue
+        if any(char in normalized for char in "*?["):
+            continue
+        candidates.append(normalized)
+
+    if not candidates:
+        return 0
+
+    import subprocess
+
+    blocked: list[str] = []
+    for rel in candidates:
+        try:
+            result = subprocess.run(
+                ["git", "check-ignore", rel],
+                capture_output=True, text=True,
+                cwd=str(ROOT),
+            )
+            if result.returncode == 0:
+                blocked.append(rel)
+        except FileNotFoundError:
+            # git not available — skip silently
+            print("WARN: git not found — skipping gitignore cross-check")
+            return 0
+
+    if not blocked:
+        print("OK: all active_source files pass gitignore check")
+        return 0
+
+    for rel in blocked:
+        print(f"BLOCKED_BY_GITIGNORE {rel}")
+    print(f"WARN: {len(blocked)} active_source files are blocked by .gitignore")
+    return 1 if strict else 0
+
+
+def _check_git_tracked(manifest: dict, strict: bool) -> int:
+    """Verify that every active_source file is tracked by git.
+
+    A file that is untracked won't be included in ``git push``, so the
+    repository would be broken after a clean clone.
+    """
+    active_source = manifest.get("active_source", [])
+    candidates: list[str] = []
+    for rel in active_source:
+        normalized = rel.replace("\\", "/")
+        if normalized.endswith("/"):
+            continue
+        if any(char in normalized for char in "*?["):
+            continue
+        candidates.append(normalized)
+
+    if not candidates:
+        return 0
+
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", *candidates],
+            capture_output=True, text=True,
+            cwd=str(ROOT),
+        )
+        tracked = set(result.stdout.strip().splitlines()) if result.stdout.strip() else set()
+    except FileNotFoundError:
+        print("WARN: git not found — skipping git-tracked check")
+        return 0
+
+    untracked = [rel for rel in candidates if rel not in tracked]
+
+    if not untracked:
+        print("OK: all active_source files are tracked by git")
+        return 0
+
+    for rel in untracked:
+        print(f"UNTRACKED_SOURCE {rel}")
+    print(f"WARN: {len(untracked)} active_source files are not tracked by git")
+    return 1 if strict else 0
+
+
 def _check_script_dispositions(manifest: dict, strict: bool) -> int:
     dispositions = manifest.get("script_dispositions", {})
     missing = [script for script in _root_scripts() if script not in dispositions]
@@ -241,8 +341,10 @@ def main() -> int:
 
     disposition_status = _check_script_dispositions(manifest, args.strict)
     reference_status = _check_cleanup_candidates_unreferenced(manifest, args.strict)
+    gitignore_status = _check_gitignore_blocks(manifest, args.strict)
+    tracked_status = _check_git_tracked(manifest, args.strict)
 
-    if not unclassified and not overlaps and disposition_status == 0 and reference_status == 0:
+    if not unclassified and not overlaps and disposition_status == 0 and reference_status == 0 and gitignore_status == 0 and tracked_status == 0:
         print("OK: all audited root files have exactly one governance category")
         return 0
 
@@ -251,7 +353,7 @@ def main() -> int:
     if unclassified:
         print(f"WARN: {len(unclassified)} root files are unclassified")
 
-    return 1 if args.strict and (unclassified or disposition_status or reference_status) else 0
+    return 1 if args.strict and (unclassified or disposition_status or reference_status or gitignore_status or tracked_status) else 0
 
 
 if __name__ == "__main__":

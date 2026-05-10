@@ -33,16 +33,23 @@ runtime/
 !path_utils.py
 !wechat_sync.py
 !auto_generate_ai.py
+!llm_client.py
+!report_utils.py
+!log.py
+!report_prompting.py
+!report_history_extraction.py
+!requirements.txt
 !arxiv_fetcher.py
 !news_fetcher.py
 !rss_news_fetcher.py
 !robust_fetch.py
 !history_db.py
 !history_tracker.py
+!tests/
+!tests/**
 !config/
 !config/footer_intro.md
-!config/cover.jpg
-!config/时空智能群管理员.jpg
+!config/
 
 # Keep credentials, state, logs, and generated debug files local.
 config_secret.json
@@ -58,3 +65,7 @@ temp_backup/
 restore_tmp/
 __pycache__/
 runtime/
+
+# Re-allow config assets that were negated by *.jpg above
+!config/cover.jpg
+!config/时空智能群管理员.jpg

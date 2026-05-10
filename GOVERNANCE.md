@@ -21,12 +21,14 @@ The active source files for that path are:
 
 - `run_daily_report.py`
 - `auto_generate_ai.py`
+- `llm_client.py`
+- `report_utils.py`
 - `arxiv_fetcher.py`
 - `news_fetcher.py`
 - `rss_news_fetcher.py`
 - `robust_fetch.py`
 - `history_db.py`
-- `history_tracker.py`
+- `log.py`
 - `git_push.py`
 - `daily_task_win.py`
 - `wechat_sync.py`

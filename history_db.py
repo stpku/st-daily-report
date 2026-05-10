@@ -1,8 +1,17 @@
 import sqlite3
 import os
+import re
+from contextlib import contextmanager
 from typing import List, Optional
 from datetime import datetime
 import path_utils
+from log import logger
+from report_history_extraction import (
+    extract_news_urls as _extract_news_urls,
+    extract_paper_titles as _extract_paper_titles,
+    extract_project_names as _extract_project_names,
+    find_section as _find_section,
+)
 
 
 DB_PATH = path_utils.resolve_path(
@@ -10,113 +19,129 @@ DB_PATH = path_utils.resolve_path(
     os.path.join(os.path.dirname(__file__), 'history.db'),
 )
 
+_NORM_RE = re.compile(r'[^a-zA-Z0-9]')
+
+
+def _normalize(text: str) -> str:
+    return _NORM_RE.sub('', text.lower()).strip()
+
+
+@contextmanager
+def _get_connection():
+    """Provide a transactional SQLite connection with auto-commit/close."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS papers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL UNIQUE,
-            arxiv_id TEXT,
-            url TEXT,
-            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS papers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL UNIQUE,
+                title_norm TEXT,
+                arxiv_id TEXT,
+                url TEXT,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_papers_title_norm ON papers(title_norm)')
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS projects (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            url TEXT,
-            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                name_norm TEXT,
+                url TEXT,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_projects_name_norm ON projects(name_norm)')
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS news_urls (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url TEXT NOT NULL UNIQUE,
-            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS news_urls (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL UNIQUE,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_news_urls_url ON news_urls(url)')
 
-    conn.commit()
-    conn.close()
+        # Backfill norm columns for existing rows
+        cursor.execute("SELECT id, title FROM papers WHERE title_norm IS NULL")
+        for row_id, title in cursor.fetchall():
+            cursor.execute("UPDATE papers SET title_norm = ? WHERE id = ?", (_normalize(title), row_id))
+        cursor.execute("SELECT id, name FROM projects WHERE name_norm IS NULL")
+        for row_id, name in cursor.fetchall():
+            cursor.execute("UPDATE projects SET name_norm = ? WHERE id = ?", (_normalize(name), row_id))
 
 
 def is_paper_in_history(title: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    norm_title = _normalize(title)
+    if not norm_title:
+        return False
 
-    import re
-    norm_title = re.sub(r'[^a-zA-Z0-9]', '', title.lower()).strip()
-
-    cursor.execute('SELECT title FROM papers')
-    existing_titles = cursor.fetchall()
-
-    for (existing_title,) in existing_titles:
-        norm_existing = re.sub(r'[^a-zA-Z0-9]', '', existing_title.lower()).strip()
-        if norm_title == norm_existing:
-            conn.close()
-            return True
-
-    conn.close()
-    return False
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT 1 FROM papers WHERE title_norm = ? LIMIT 1',
+            (norm_title,),
+        )
+        return cursor.fetchone() is not None
 
 
 def is_project_in_history(name: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    norm_name = _normalize(name)
+    if not norm_name:
+        return False
 
-    import re
-    norm_name = re.sub(r'[^a-zA-Z0-9]', '', name.lower()).strip()
-
-    cursor.execute('SELECT name FROM projects')
-    existing_names = cursor.fetchall()
-
-    for (existing_name,) in existing_names:
-        norm_existing = re.sub(r'[^a-zA-Z0-9]', '', existing_name.lower()).strip()
-
-        if norm_name == norm_existing:
-            conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT name_norm FROM projects WHERE name_norm = ? LIMIT 1',
+            (norm_name,),
+        )
+        if cursor.fetchone():
             return True
 
-        if len(norm_name) > 4 and len(norm_existing) > 4:
-            if norm_name in norm_existing or norm_existing in norm_name:
-                conn.close()
+        # Substring matching for longer names
+        if len(norm_name) > 4:
+            cursor.execute(
+                "SELECT name_norm FROM projects WHERE name_norm LIKE ? LIMIT 1",
+                (f"%{norm_name}%",),
+            )
+            if cursor.fetchone():
+                return True
+            cursor.execute(
+                "SELECT name_norm FROM projects WHERE ? LIKE '%' || name_norm || '%' LIMIT 1",
+                (norm_name,),
+            )
+            if cursor.fetchone():
                 return True
 
-    conn.close()
     return False
-
-
-def is_news_in_history(url: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT 1 FROM news_urls WHERE url = ?', (url,))
-    result = cursor.fetchone()
-
-    conn.close()
-    return result is not None
 
 
 def add_paper(title: str, arxiv_id: Optional[str] = None, url: Optional[str] = None) -> bool:
     if is_paper_in_history(title):
         return False
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        INSERT INTO papers (title, arxiv_id, url)
-        VALUES (?, ?, ?)
-    ''', (title, arxiv_id, url))
-
-    conn.commit()
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO papers (title, title_norm, arxiv_id, url)
+            VALUES (?, ?, ?, ?)
+        ''', (title, _normalize(title), arxiv_id, url))
     return True
 
 
@@ -125,15 +150,11 @@ def update_paper_timestamp(title: str) -> bool:
     if not is_paper_in_history(title):
         return False
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        UPDATE papers SET added_at = CURRENT_TIMESTAMP WHERE title = ?
-    ''', (title,))
-
-    conn.commit()
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE papers SET added_at = CURRENT_TIMESTAMP WHERE title_norm = ?
+        ''', (_normalize(title),))
     return True
 
 
@@ -141,16 +162,12 @@ def add_project(name: str, url: Optional[str] = None) -> bool:
     if is_project_in_history(name):
         return False
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        INSERT INTO projects (name, url)
-        VALUES (?, ?)
-    ''', (name, url))
-
-    conn.commit()
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO projects (name, name_norm, url)
+            VALUES (?, ?, ?)
+        ''', (name, _normalize(name), url))
     return True
 
 
@@ -159,15 +176,11 @@ def update_project_timestamp(name: str) -> bool:
     if not is_project_in_history(name):
         return False
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        UPDATE projects SET added_at = CURRENT_TIMESTAMP WHERE name = ?
-    ''', (name,))
-
-    conn.commit()
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE projects SET added_at = CURRENT_TIMESTAMP WHERE name_norm = ?
+        ''', (_normalize(name),))
     return True
 
 
@@ -175,83 +188,75 @@ def add_news_url(url: str) -> bool:
     if is_news_in_history(url):
         return False
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        INSERT INTO news_urls (url)
-        VALUES (?)
-    ''', (url,))
-
-    conn.commit()
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO news_urls (url)
+            VALUES (?)
+        ''', (url,))
     return True
 
 
 def get_recent_projects(limit: int = 20) -> List[str]:
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    if limit <= 0:
-        cursor.execute('SELECT name FROM projects ORDER BY added_at DESC')
-    else:
-        cursor.execute('SELECT name FROM projects ORDER BY added_at DESC LIMIT ?', (limit,))
-
-    projects = [row[0] for row in cursor.fetchall()]
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        if limit <= 0:
+            cursor.execute('SELECT name FROM projects ORDER BY added_at DESC')
+        else:
+            cursor.execute('SELECT name FROM projects ORDER BY added_at DESC LIMIT ?', (limit,))
+        projects = [row[0] for row in cursor.fetchall()]
     return projects
 
 
 def get_recent_papers(limit: int = 10) -> List[dict]:
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    if limit <= 0:
-        cursor.execute('SELECT title, arxiv_id, url, added_at FROM papers ORDER BY added_at DESC')
-    else:
-        cursor.execute('SELECT title, arxiv_id, url, added_at FROM papers ORDER BY added_at DESC LIMIT ?', (limit,))
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        if limit <= 0:
+            cursor.execute('SELECT title, arxiv_id, url, added_at FROM papers ORDER BY added_at DESC')
+        else:
+            cursor.execute('SELECT title, arxiv_id, url, added_at FROM papers ORDER BY added_at DESC LIMIT ?', (limit,))
+        rows = cursor.fetchall()
 
     papers = []
-    for row in cursor.fetchall():
+    for row in rows:
         papers.append({
             'title': row[0],
             'arxiv_id': row[1],
             'url': row[2],
             'added_at': row[3]
         })
-
-    conn.close()
     return papers
 
 
 def get_recent_news_urls(limit: int = 20) -> List[str]:
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    if limit <= 0:
-        cursor.execute('SELECT url FROM news_urls ORDER BY added_at DESC')
-    else:
-        cursor.execute('SELECT url FROM news_urls ORDER BY added_at DESC LIMIT ?', (limit,))
-
-    urls = [row[0] for row in cursor.fetchall()]
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        if limit <= 0:
+            cursor.execute('SELECT url FROM news_urls ORDER BY added_at DESC')
+        else:
+            cursor.execute('SELECT url FROM news_urls ORDER BY added_at DESC LIMIT ?', (limit,))
+        urls = [row[0] for row in cursor.fetchall()]
     return urls
+
+
+def is_news_in_history(url: str) -> bool:
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1 FROM news_urls WHERE url = ? LIMIT 1', (url,))
+        exists = cursor.fetchone() is not None
+    return exists
 
 
 def get_recent_papers_titles(limit: int = 10) -> List[str]:
     """Get recent paper titles as a list of strings."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    if limit <= 0:
-        cursor.execute('SELECT title FROM papers ORDER BY added_at DESC')
-    else:
-        cursor.execute('SELECT title FROM papers ORDER BY added_at DESC LIMIT ?', (limit,))
-
-    papers = [row[0] for row in cursor.fetchall()]
-    conn.close()
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        if limit <= 0:
+            cursor.execute('SELECT title FROM papers ORDER BY added_at DESC')
+        else:
+            cursor.execute('SELECT title FROM papers ORDER BY added_at DESC LIMIT ?', (limit,))
+        papers = [row[0] for row in cursor.fetchall()]
     return papers
-
 
 def update_history_from_content(content: str) -> List[str]:
     """
@@ -259,70 +264,55 @@ def update_history_from_content(content: str) -> List[str]:
     then update history database.
     Returns list of new projects added.
     """
-    import re
     new_projects = []
 
     # Papers
-    paper_section_match = re.search(
-        r'(## A\.|## Section A).*Top Papers.*?(?=## B\.|## Section B|$)',
-        content, re.DOTALL
+    paper_section_text = _find_section(
+        content,
+        r'(## A\.|## Section A).*Top Papers',
+        r'## B\.|## Section B',
     )
     new_papers = []
-    if paper_section_match:
-        section_text = paper_section_match.group(0)
-        paper_items = re.findall(r'^\d+\)\s+\*\*(.*?)\*\*（\*(.*?)\*）', section_text, re.MULTILINE)
-
-        for chinese_title, english_title in paper_items:
-            paper_title = f"{chinese_title.strip()}（{english_title.strip()}）"
-            if paper_title:
-                if not is_paper_in_history(paper_title):
-                    add_paper(paper_title)
-                    new_papers.append(paper_title)
-                else:
-                    update_paper_timestamp(paper_title)
+    for paper_title in _extract_paper_titles(paper_section_text):
+        if not is_paper_in_history(paper_title):
+            add_paper(paper_title)
+            new_papers.append(paper_title)
+        else:
+            update_paper_timestamp(paper_title)
 
     if new_papers:
-        print(f"Updated history with {len(new_papers)} new papers.")
+        logger.info("Updated history with %d new papers.", len(new_papers))
 
     # Projects
-    project_section_match = re.search(
-        r'(## C\.|## Section C).*Open Source Projects.*?(?=## D\.|## 3 New Ideas|$)',
-        content, re.DOTALL
+    project_section_text = _find_section(
+        content,
+        r'(## C\.|## Section C).*(Open Source Projects|Tools / Data / Open Source Updates)',
+        r'## D\.|## 3 New Ideas|## Problem Leads',
     )
-    if project_section_match:
-        section_text = project_section_match.group(0)
-        project_names = re.findall(r'\*\*(.*?)\*\*', section_text)
-
-        for name in project_names:
-            name = name.strip()
-            if len(name) > 2:
-                if not is_project_in_history(name):
-                    add_project(name)
-                    new_projects.append(name)
-                else:
-                    update_project_timestamp(name)
+    for name in _extract_project_names(project_section_text):
+        if not is_project_in_history(name):
+            add_project(name)
+            new_projects.append(name)
+        else:
+            update_project_timestamp(name)
 
     if new_projects:
-        print(f"Updated history with new projects: {new_projects}")
+        logger.info("Updated history with new projects: %s", new_projects)
 
     # News URLs
-    news_section_match = re.search(
-        r'(## B\.|## Section B).*Industry News.*?(?=## C\.|## Section C|## 3 New Ideas|$)',
-        content, re.DOTALL
+    news_section_text = _find_section(
+        content,
+        r'(## B\.|## Section B).*Industry News',
+        r'## C\.|## Section C|## 3 New Ideas|## Problem Leads',
     )
     new_urls = []
-    if news_section_match:
-        section_text = news_section_match.group(0)
-        urls = re.findall(r'(https?://[^\s\)]+)', section_text)
-
-        for url in urls:
-            url = url.strip().rstrip(')')
-            if not is_news_in_history(url):
-                add_news_url(url)
-                new_urls.append(url)
+    for url in _extract_news_urls(news_section_text):
+        if not is_news_in_history(url):
+            add_news_url(url)
+            new_urls.append(url)
 
     if new_urls:
-        print(f"Updated history with {len(new_urls)} new news URLs.")
+        logger.info("Updated history with %d new news URLs.", len(new_urls))
 
     return new_projects
 
@@ -336,7 +326,7 @@ def migrate_from_json(json_path: str | None = None):
     import json
 
     if not os.path.exists(json_path):
-        print(f"JSON file not found: {json_path}")
+        logger.info("JSON file not found: %s", json_path)
         return
 
     with open(json_path, 'r', encoding='utf-8') as f:
@@ -356,10 +346,10 @@ def migrate_from_json(json_path: str | None = None):
         if add_news_url(url):
             migrated_count += 1
 
-    print(f"Migrated {migrated_count} items from {json_path} to SQLite database")
+    logger.info("Migrated %d items from %s to SQLite database", migrated_count, json_path)
 
 
 if __name__ == '__main__':
     init_db()
     migrate_from_json()
-    print("Database initialized successfully.")
+    logger.info("Database initialized successfully.")

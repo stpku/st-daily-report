@@ -51,7 +51,8 @@ REM --- Step 3: WeChat sync ---
 echo [%date% %time%] Step 3/3: Syncing to WeChat ... >> "%LOG_FILE%" 2>&1
 python daily_task_win.py >> "%LOG_FILE%" 2>&1
 if errorlevel 1 (
-    echo [%date% %time%] WARNING: WeChat sync failed >> "%LOG_FILE%" 2>&1
+    echo [%date% %time%] ERROR: WeChat sync failed >> "%LOG_FILE%" 2>&1
+    exit /b 1
 ) else (
     echo [%date% %time%] Step 3/3: WeChat sync done >> "%LOG_FILE%" 2>&1
 )

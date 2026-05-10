@@ -6,6 +6,26 @@ import time
 import sys
 import path_utils
 
+# WeChat Official Account CSS Styles (module-level constant)
+STYLES = {
+    'h1': 'font-size: 22px; font-weight: bold; text-align: center; margin: 20px 0 30px; color: #1f2d3d;',
+    'h2': 'font-size: 18px; font-weight: bold; color: #1f2d3d; border-left: 5px solid #007bff; padding-left: 12px; margin: 40px 0 20px 0; line-height: 1.4;',
+    'h3': 'font-size: 16px; font-weight: bold; color: #1f2d3d; margin: 25px 0 10px 0;',
+    'p': 'font-size: 16px; line-height: 1.75; color: #3f3f3f; margin: 15px 0; text-align: justify;',
+    'ul': 'margin: 10px 0 15px 0; padding-left: 0; list-style: none;',
+    'li': 'font-size: 15px; line-height: 1.75; color: #3f3f3f; margin-bottom: 8px; text-align: left; padding-left: 0;',
+    'blockquote': 'border-left: 4px solid #e0e0e0; padding-left: 12px; color: #666; margin: 15px 0; font-size: 15px;',
+    'code': 'font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; font-size: 14px; background-color: #f6f8fa; padding: 2px 4px; border-radius: 4px; color: #c7254e;',
+    'pre': 'background-color: #f6f8fa; padding: 16px; overflow-x: auto; border-radius: 6px; margin: 16px 0; font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; font-size: 14px; line-height: 1.45;',
+    'a': 'color: #576b95; text-decoration: none; word-break: break-all;',
+    'strong': 'font-weight: bold; color: #333;',
+    'hr': 'border: 0; border-top: 1px solid #eee; margin: 30px 0;',
+    'insight': 'color: #e67e22; font-weight: bold;',
+    'paper_title': 'font-size: 17px; font-weight: bold; color: #2c3e50; display: block; margin-top: 25px; margin-bottom: 10px; line-height: 1.5;',
+    'paper_meta': 'font-size: 14px; color: #7f8c8d; margin-bottom: 12px; display: block; word-break: break-all;',
+}
+
+
 class WeChatSync:
     def __init__(self, config_path):
         self.config_path = config_path
@@ -14,25 +34,6 @@ class WeChatSync:
         self.secret = self.config.get('wx_app_secret')
         self.token = None
         self.token_expiry = 0
-
-        # WeChat Official Account CSS Styles
-        self.STYLES = {
-            'h1': 'font-size: 22px; font-weight: bold; text-align: center; margin: 20px 0 30px; color: #1f2d3d;',
-            'h2': 'font-size: 18px; font-weight: bold; color: #1f2d3d; border-left: 5px solid #007bff; padding-left: 12px; margin: 40px 0 20px 0; line-height: 1.4;',
-            'h3': 'font-size: 16px; font-weight: bold; color: #1f2d3d; margin: 25px 0 10px 0;',
-            'p': 'font-size: 16px; line-height: 1.75; color: #3f3f3f; margin: 15px 0; text-align: justify;',
-            'ul': 'margin: 10px 0 15px 0; padding-left: 0; list-style: none;',
-            'li': 'font-size: 15px; line-height: 1.75; color: #3f3f3f; margin-bottom: 8px; text-align: left; padding-left: 0;',
-            'blockquote': 'border-left: 4px solid #e0e0e0; padding-left: 12px; color: #666; margin: 15px 0; font-size: 15px;',
-            'code': 'font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; font-size: 14px; background-color: #f6f8fa; padding: 2px 4px; border-radius: 4px; color: #c7254e;',
-            'pre': 'background-color: #f6f8fa; padding: 16px; overflow-x: auto; border-radius: 6px; margin: 16px 0; font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; font-size: 14px; line-height: 1.45;',
-            'a': 'color: #576b95; text-decoration: none; word-break: break-all;',
-            'strong': 'font-weight: bold; color: #333;',
-            'hr': 'border: 0; border-top: 1px solid #eee; margin: 30px 0;',
-            'insight': 'color: #e67e22; font-weight: bold;',
-            'paper_title': 'font-size: 17px; font-weight: bold; color: #2c3e50; display: block; margin-top: 25px; margin-bottom: 10px; line-height: 1.5;',
-            'paper_meta': 'font-size: 14px; color: #7f8c8d; margin-bottom: 12px; display: block; word-break: break-all;'
-        }
 
     def _load_config(self):
         if os.path.exists(self.config_path):
@@ -132,6 +133,67 @@ class WeChatSync:
         content = re.sub(r'^Key Message:', '**Key Message:**', content, flags=re.MULTILINE)
         return content
 
+    def _get_list_prefix(self, current_section, list_index):
+        prefix = ""
+        if "Open Source" in current_section or "开源" in current_section:
+            list_index += 1
+            prefix = f"{list_index}) "
+        return prefix, list_index
+
+    def _render_list_item(self, content, prefix=""):
+        match = re.match(r'^\*\*(.*?)\*\*(.*)', content)
+        if match:
+            title_text = match.group(1).strip()
+            rest_text = match.group(2).strip()
+            if rest_text.startswith(':') or rest_text.startswith('：'):
+                rest_text = rest_text[1:].strip()
+
+            item_html = (
+                '<p style="font-size: 15px; line-height: 1.75; color: #3f3f3f; '
+                'margin: 4px 0 8px 0; text-align: left;">'
+                f'<span style="margin-right: 8px; color: #333;">•</span>'
+                f'<strong style="color: #2c3e50;">{prefix}{title_text}</strong></p>'
+            )
+            if rest_text:
+                item_html += (
+                    '<p style="font-size: 14px; line-height: 1.75; color: #555; '
+                    'margin: 0 0 8px 24px; text-align: left;">'
+                    f'{self._process_inline(rest_text)}</p>'
+                )
+            return item_html
+
+        return (
+            '<p style="font-size: 15px; line-height: 1.75; color: #3f3f3f; '
+            'margin: 4px 0 8px 0; text-align: left;">'
+            f'<span style="margin-right: 8px; color: #333;">•</span>{prefix}'
+            f'{self._process_inline(content)}</p>'
+        )
+
+    def _render_heading_line(self, line):
+        if line.startswith('# '):
+            return f'<h1 style="{STYLES["h1"]}">{self._process_inline(line[2:])}</h1>', None, None
+        if line.startswith('## '):
+            current_section = line[3:]
+            return (
+                f'<h2 style="{STYLES["h2"]}">{self._process_inline(current_section)}</h2>',
+                current_section,
+                0,
+            )
+        if line.startswith('### '):
+            return f'<h3 style="{STYLES["h3"]}">{self._process_inline(line[4:])}</h3>', None, None
+        return "", None, None
+
+    def _render_blockquote_line(self, line):
+        content = self._process_inline(line[2:])
+        return f'<blockquote style="{STYLES["blockquote"]}">{content}</blockquote>'
+
+    def _render_paper_title_line(self, line):
+        full_line = line.replace('**', '')
+        return f'<div style="{STYLES["paper_title"]}">{self._process_inline(full_line)}</div>'
+
+    def _render_paragraph_line(self, line):
+        return f'<p style="{STYLES["p"]}">{self._process_inline(line)}</p>'
+
     def _block_parse(self, text):
         lines = text.split('\n')
         output = []
@@ -153,7 +215,7 @@ class WeChatSync:
                 if in_code_block:
                     # End code block
                     code_html = '\n'.join(code_content)
-                    output.append(f'<pre style="{self.STYLES["pre"]}"><code style="background-color: transparent; color: inherit;">{code_html}</code></pre>')
+                    output.append(f'<pre style="{STYLES["pre"]}"><code style="background-color: transparent; color: inherit;">{code_html}</code></pre>')
                     in_code_block = False
                     code_content = []
                 else:
@@ -193,96 +255,55 @@ class WeChatSync:
 
     # Special case: **Key Message:** should not trigger list mode
             if '**Key Message:**' in line:
-                output.append(f'<p style="{self.STYLES["p"]}">{self._process_inline(line)}</p>')
+                output.append(self._render_paragraph_line(line))
                 continue
 
             # Skip empty lines after headers to avoid creating empty list items
             if not line_stripped and not in_list:
                 continue
-            if line.startswith('# '):
-                output.append(f'<h1 style="{self.STYLES["h1"]}">{self._process_inline(line[2:])}</h1>')
-            elif line.startswith('## '):
-                current_section = line[3:]
-                list_index = 0
-                output.append(f'<h2 style="{self.STYLES["h2"]}">{self._process_inline(current_section)}</h2>')
-            elif line.startswith('### '):
-                output.append(f'<h3 style="{self.STYLES["h3"]}">{self._process_inline(line[4:])}</h3>')
+
+            heading_html, next_section, next_list_index = self._render_heading_line(line)
+            if heading_html:
+                if next_section is not None:
+                    current_section = next_section
+                if next_list_index is not None:
+                    list_index = next_list_index
+                output.append(heading_html)
+                continue
 
             # Horizontal Rule
-            elif line.startswith('---'):
-                output.append(f'<hr style="{self.STYLES["hr"]}"/>')
+            if line.startswith('---'):
+                output.append(f'<hr style="{STYLES["hr"]}"/>')
+                continue
 
             # Lists (use <p> with manual bullet for WeChat compatibility)
-            elif line.startswith('- ') or line.startswith('* '):
+            if line.startswith('- ') or line.startswith('* '):
                 if not in_list:
                     in_list = True
                 
                 content = line[2:].strip()
-                
-                # Numbering logic for Open Source section
-                prefix = ""
-                if "Open Source" in current_section or "开源" in current_section:
-                    list_index += 1
-                    prefix = f"{list_index}) "
-                
-                # Special handling for bold title followed by text (e.g., **Title**: content)
-                match = re.match(r'^\*\*(.*?)\*\*(.*)', content)
-                if match:
-                    title_text = match.group(1).strip()
-                    rest_text = match.group(2).strip()
-                    if rest_text.startswith(':') or rest_text.startswith('：'):
-                        rest_text = rest_text[1:].strip()
-                    
-                    item_html = f'<p style="font-size: 15px; line-height: 1.75; color: #3f3f3f; margin: 4px 0 8px 0; text-align: left;"><span style="margin-right: 8px; color: #333;">•</span><strong style="color: #2c3e50;">{prefix}{title_text}</strong></p>'
-                    if rest_text:
-                        item_html += f'<p style="font-size: 14px; line-height: 1.75; color: #555; margin: 0 0 8px 24px; text-align: left;">{self._process_inline(rest_text)}</p>'
-                    output.append(item_html)
-                else:
-                    output.append(f'<p style="font-size: 15px; line-height: 1.75; color: #3f3f3f; margin: 4px 0 8px 0; text-align: left;"><span style="margin-right: 8px; color: #333;">•</span>{prefix}{self._process_inline(content)}</p>')
+                prefix, list_index = self._get_list_prefix(current_section, list_index)
+                output.append(self._render_list_item(content, prefix))
+                continue
 
             # Blockquotes
-            elif line.startswith('> '):
+            if line.startswith('> '):
                 if in_list:
                     in_list = False
-                content = self._process_inline(line[2:])
-                output.append(f'<blockquote style="{self.STYLES["blockquote"]}">{content}</blockquote>')
+                output.append(self._render_blockquote_line(line))
+                continue
 
             # Paper Title: 1) **Title**
-            elif re.match(r'^\d+\)\s*\*\*(.*?)\*\*', line):
+            if re.match(r'^\d+\)\s*\*\*(.*?)\*\*', line):
                 match = re.match(r'^\d+\)\s*\*\*(.*?)\*\*(.*)', line)
                 if match:
-                    full_line = line.replace('**', '')
-                    output.append(f'<div style="{self.STYLES["paper_title"]}">{self._process_inline(full_line)}</div>')
-
-            # One-line Insight
-            elif "One-line Insight:" in line:
-                formatted_line = line.replace('- ', '', 1).strip()
-                formatted_line = formatted_line.replace('**One-line Insight:**', f'<span style="{self.STYLES["insight"]}">One-line Insight:</span>')
-                formatted_line = formatted_line.replace('One-line Insight:', f'<span style="{self.STYLES["insight"]}">One-line Insight:</span>')
-                output.append(f'<p style="{self.STYLES["p"]}">{formatted_line}</p>')
-
-            # Impact, Why it matters, Description - similar to One-line Insight
-            elif "Impact:" in line or "Why it matters:" in line or "Description:" in line:
-                formatted_line = line.replace('- ', '', 1).strip()
-                if "Impact:" in formatted_line:
-                    formatted_line = formatted_line.replace('Impact:', f'<span style="{self.STYLES["insight"]}">Impact:</span>')
-                elif "Why it matters:" in formatted_line:
-                    formatted_line = formatted_line.replace('Why it matters:', f'<span style="{self.STYLES["insight"]}">Why it matters:</span>')
-                elif "Description:" in formatted_line:
-                    formatted_line = formatted_line.replace('Description:', f'<span style="{self.STYLES["insight"]}">Description:</span>')
-                output.append(f'<p style="{self.STYLES["p"]}">{formatted_line}</p>')
-
-            # Link Metadata lines (Link: ...)
-            elif line.strip().startswith('Link:') or line.strip().startswith('- Link:'):
-                content = line.replace('- ', '', 1).strip()
-                content = self._process_inline(content)
-                output.append(f'<div style="{self.STYLES["paper_meta"]}">{content}</div>')
+                    output.append(self._render_paper_title_line(line))
+                    continue
 
             # Paragraphs
-            else:
-                if in_list:
-                    in_list = False
-                output.append(f'<p style="{self.STYLES["p"]}">{self._process_inline(line)}</p>')
+            if in_list:
+                in_list = False
+            output.append(self._render_paragraph_line(line))
 
         if in_list:
             pass  # no </ul> needed with <p> based lists
@@ -306,7 +327,7 @@ class WeChatSync:
         label = match.group(1)
         value = self._process_inline(match.group(2).strip())
         return (
-            f'<div style="{self.STYLES["paper_meta"]}">'
+            f'<div style="{STYLES["paper_meta"]}">'
             f'<strong style="color: #576b95;">{label}：</strong>{value}'
             f'</div>'
         )
@@ -325,22 +346,22 @@ class WeChatSync:
         label = match.group(1)
         value = self._process_inline(match.group(2).strip())
         return (
-            f'<p style="{self.STYLES["p"]}">'
-            f'<span style="{self.STYLES["insight"]}">{label}：</span>{value}'
+            f'<p style="{STYLES["p"]}">'
+            f'<span style="{STYLES["insight"]}">{label}：</span>{value}'
             f'</p>'
         )
 
     def _process_inline(self, text):
         # Links
-        text = re.sub(r'\[(.*?)\]\((.*?)\)', lambda m: f'<a href="{m.group(2)}" style="{self.STYLES["a"]}">{m.group(1)}</a>', text)
+        text = re.sub(r'\[(.*?)\]\((.*?)\)', lambda m: f'<a href="{m.group(2)}" style="{STYLES["a"]}">{m.group(1)}</a>', text)
         # Bold: Use non-greedy match
-        text = re.sub(r'\*\*(.+?)\*\*', r'<strong style="' + self.STYLES['strong'] + r'">\1</strong>', text)
+        text = re.sub(r'\*\*(.+?)\*\*', r'<strong style="' + STYLES['strong'] + r'">\1</strong>', text)
         # Italic: Simple match (after bold)
         text = re.sub(r'(?<!\w)\*([^*]+?)\*(?!\w)', r'<em>\1</em>', text)
         # Code
-        text = re.sub(r'`(.*?)`', r'<code style="' + self.STYLES['code'] + r'">\1</code>', text)
+        text = re.sub(r'`(.*?)`', r'<code style="' + STYLES['code'] + r'">\1</code>', text)
         # Auto-link http/https if not already linked
-        text = re.sub(r'(?<!href=")(?<!\]\()(https?://[^\s<]+)', lambda m: f'<a href="{m.group(1)}" style="{self.STYLES["a"]}">{m.group(1)}</a>', text)
+        text = re.sub(r'(?<!href=")(?<!\]\()(https?://[^\s<]+)', lambda m: f'<a href="{m.group(1)}" style="{STYLES["a"]}">{m.group(1)}</a>', text)
         return text
 
     def _process_footer(self, md_content, base_dir=None):
@@ -372,17 +393,17 @@ class WeChatSync:
             # Convert lists to simple paragraphs
             if line.startswith('- ') or line.startswith('* '):
                 content = line[2:].strip()
-                html_lines.append(f'<p style="{self.STYLES["p"]}">{self._process_inline(content)}</p>')
+                html_lines.append(f'<p style="{STYLES["p"]}">{self._process_inline(content)}</p>')
             # Headers
             elif line.startswith('## '):
                 content = line[3:].strip()
-                html_lines.append(f'<h2 style="{self.STYLES["h2"]}">{self._process_inline(content)}</h2>')
+                html_lines.append(f'<h2 style="{STYLES["h2"]}">{self._process_inline(content)}</h2>')
             elif line.startswith('### '):
                 content = line[4:].strip()
-                html_lines.append(f'<h3 style="{self.STYLES["h3"]}">{self._process_inline(content)}</h3>')
+                html_lines.append(f'<h3 style="{STYLES["h3"]}">{self._process_inline(content)}</h3>')
             # Normal text
             else:
-                html_lines.append(f'<p style="{self.STYLES["p"]}">{self._process_inline(line)}</p>')
+                html_lines.append(f'<p style="{STYLES["p"]}">{self._process_inline(line)}</p>')
                 
         return '\n'.join(html_lines)
 
@@ -413,97 +434,74 @@ class WeChatSync:
         else:
             print("HTML Verification Passed: No obvious markdown artifacts found.")
 
-    def sync(self, file_path):
-        if not self.app_id or not self.secret:
-            print("Skipping WeChat Sync: Credentials missing.")
-            return False
-            
-        token = self.get_access_token()
-        cover_id = self.get_cover_media_id()
-        
-        if not cover_id:
-            print("Skipping WeChat Sync: Could not get cover image.")
-            return False
-            
+    def _build_title(self, file_path: str) -> str:
         basename = os.path.basename(file_path)
-        
-        # Read file content first
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        # Generate Title
-        title = None
         date_match = re.search(r'\d{4}-\d{2}-\d{2}', basename)
         if date_match:
             date_str = date_match.group(0)
-            title = f"时空智能|世界模型前沿日报 ({date_str})"
         else:
-            current_date = time.strftime('%Y-%m-%d')
-            title = f"时空智能|世界模型前沿日报 ({current_date})"
+            date_str = time.strftime('%Y-%m-%d')
+        return f"燕园时空｜GeoAI & World Model 前沿日报 {date_str}"
 
-        # Generate Gitee Link
+    def _build_gitee_link_html(self, file_path: str) -> str:
         try:
             rel_path = os.path.relpath(file_path, start=os.path.dirname(os.path.dirname(self.config_path)))
             rel_path = rel_path.replace(os.sep, '/')
             gitee_url = f"https://gitee.com/stpku/st-daily-report/blob/master/{rel_path}"
-            
-            link_html = f'<div style="text-align: left; margin-bottom: 20px;"><span style="font-size: 14px; color: #576b95; background-color: #f2f2f2; padding: 10px; border-radius: 4px; display: inline-block;">原文链接：<br><span style="font-size: 12px; color: #7f8c8d; word-break: break-all;">{gitee_url}</span></span></div>'
+            return (
+                '<div style="text-align: left; margin-bottom: 20px;">'
+                '<span style="font-size: 14px; color: #576b95; background-color: #f2f2f2; '
+                'padding: 10px; border-radius: 4px; display: inline-block;">原文链接：<br>'
+                f'<span style="font-size: 12px; color: #7f8c8d; word-break: break-all;">{gitee_url}</span>'
+                '</span></div>'
+            )
         except Exception as e:
             print(f"Error generating Gitee link: {e}")
-            link_html = ""
+            return ""
 
-        # Load Footer
-        footer_html = ""
+    def _build_footer_html(self) -> str:
         footer_path = os.path.join(os.path.dirname(self.config_path), 'footer_intro.md')
-        if os.path.exists(footer_path):
-            with open(footer_path, 'r', encoding='utf-8') as f:
-                footer_md = f.read()
-                # Use special footer processor
-                footer_content = self._process_footer(footer_md, base_dir=os.path.dirname(footer_path))
-                footer_html = (
-                    '<section style="margin-top: 40px; padding: 18px 18px 16px 18px; '
-                    'background-color: #f3f7fb; border: 1px solid #c9d8ea; '
-                    'border-left: 5px solid #2f80ed; border-radius: 6px;">'
-                    f'{footer_content}</section>'
-                )
+        if not os.path.exists(footer_path):
+            return ""
+        with open(footer_path, 'r', encoding='utf-8') as f:
+            footer_md = f.read()
+        footer_content = self._process_footer(footer_md, base_dir=os.path.dirname(footer_path))
+        return (
+            '<section style="margin-top: 40px; padding: 18px 18px 16px 18px; '
+            'background-color: #f3f7fb; border: 1px solid #c9d8ea; '
+            'border-left: 5px solid #2f80ed; border-radius: 6px;">'
+            f'{footer_content}</section>'
+        )
 
-        # Extract Digest
+    @staticmethod
+    def _extract_digest(content: str) -> str:
         digest = "Daily updates on GeoAI and World Models."
         if "摘要" in content:
-             digest_match = re.search(r'摘要[：|:]\s*(.*)', content)
-             if digest_match:
-                 digest = digest_match.group(1).strip()
+            digest_match = re.search(r'摘要[：|:]\s*(.*)', content)
+            if digest_match:
+                digest = digest_match.group(1).strip()
         if len(digest) > 50:
-             digest = digest[:50] + "..."
-                
-        # Main Content Conversion
-        html_content = self.md_to_html(content)
-        
-        # Combine
-        final_html = link_html + html_content + footer_html
-        
-        # Verify
-        self.verify_html(final_html)
-        
+            digest = digest[:50] + "..."
+        return digest
+
+    def _create_draft(self, token: str, title: str, html_content: str, cover_id: str, digest: str) -> bool:
         url = f"https://api.weixin.qq.com/cgi-bin/draft/add?access_token={token}"
-        
         payload = {
             "articles": [
                 {
                     "title": title,
                     "author": "燕园时空客",
-                    "content": final_html,
+                    "content": html_content,
                     "thumb_media_id": cover_id,
                     "digest": digest
                 }
             ]
         }
-        
         payload_json = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-        
+        print(f"Draft title: {title}")
         resp = requests.post(url, data=payload_json, headers={'Content-Type': 'application/json; charset=utf-8'}, timeout=30)
         res_data = resp.json()
-        
+
         if 'media_id' in res_data:
             print(f"Successfully created draft: {res_data['media_id']}")
             return True
@@ -515,6 +513,32 @@ class WeChatSync:
                     del self.config['wx_cover_media_id']
                     self._save_config()
             return False
+
+    def sync(self, file_path):
+        if not self.app_id or not self.secret:
+            print("Skipping WeChat Sync: Credentials missing.")
+            return False
+
+        token = self.get_access_token()
+        cover_id = self.get_cover_media_id()
+
+        if not cover_id:
+            print("Skipping WeChat Sync: Could not get cover image.")
+            return False
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        title = self._build_title(file_path)
+        link_html = self._build_gitee_link_html(file_path)
+        footer_html = self._build_footer_html()
+        digest = self._extract_digest(content)
+
+        html_content = self.md_to_html(content)
+        final_html = link_html + html_content + footer_html
+
+        self.verify_html(final_html)
+        return self._create_draft(token, title, final_html, cover_id, digest)
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
