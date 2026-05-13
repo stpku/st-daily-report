@@ -36,6 +36,7 @@ def test_build_news_context_uses_fallback_when_empty():
 
 def test_generate_and_save_report_runs_fix_and_save(monkeypatch):
     calls = []
+    validation_calls = []
 
     monkeypatch.setattr(
         run_daily_report.auto_generate_ai,
@@ -47,6 +48,25 @@ def test_generate_and_save_report_runs_fix_and_save(monkeypatch):
         "validate_and_fix_arxiv_links",
         lambda content, papers_context: (f"fixed::{content}::{papers_context}", 0),
     )
+    monkeypatch.setattr(
+        run_daily_report.daily_report_quality,
+        "clean_markdown_artifacts",
+        lambda content: f"clean::{content}",
+    )
+
+    class FakeValidation:
+        warnings = []
+        blockers = []
+        ok = True
+
+        def to_dict(self):
+            return {"ok": True}
+
+    def fake_validate(content, target_date, language):
+        validation_calls.append((content, target_date, language))
+        return FakeValidation()
+
+    monkeypatch.setattr(run_daily_report.daily_report_quality, "validate_report", fake_validate)
 
     def fake_save(date_str, language, content):
         calls.append((date_str, language, content))
@@ -54,16 +74,20 @@ def test_generate_and_save_report_runs_fix_and_save(monkeypatch):
 
     monkeypatch.setattr(run_daily_report.auto_generate_ai, "save_report", fake_save)
 
+    quality_results = {}
     output_path = run_daily_report.generate_and_save_report(
         config={},
         target_date="2026-05-10",
         papers_context="papers-context",
         news_context="news-context",
         language="zh",
+        quality_results=quality_results,
     )
 
     assert output_path == "/tmp/zh.md"
-    assert calls == [("2026-05-10", "zh", "fixed::raw-content::papers-context")]
+    assert calls == [("2026-05-10", "zh", "clean::fixed::raw-content::papers-context")]
+    assert validation_calls == [("clean::fixed::raw-content::papers-context", "2026-05-10", "zh")]
+    assert quality_results == {"zh": {"ok": True}}
 
 
 def test_generate_and_save_report_returns_none_when_generation_fails(monkeypatch):

@@ -21,6 +21,8 @@
     "auto_generate_ai.py",
     "llm_client.py",
     "report_utils.py",
+    "daily_report_quality.py",
+    "footer_policy.py",
     "report_prompting.py",
     "report_history_extraction.py",
     "arxiv_fetcher.py",
@@ -29,6 +31,8 @@
     "robust_fetch.py",
     "history_db.py",
     "config/footer_intro.md",
+    "config/footer_intro_v2.md",
+    "config/footer_intro_v3.md",
     "config/cover.jpg",
     "config/时空智能群管理员.jpg"
   ],
@@ -132,6 +136,14 @@
     "report_utils.py": {
       "action": "keep_active",
       "reason": "Report output utilities (path building, saving, link validation, network detection) extracted from auto_generate_ai.py."
+    },
+    "daily_report_quality.py": {
+      "action": "keep_active",
+      "reason": "Pre-save report quality gate, markdown artifact cleanup, duplicate detection, source cache, and run manifest writer."
+    },
+    "footer_policy.py": {
+      "action": "keep_active",
+      "reason": "Selects safe link-based footer variants for WeChat rendering without embedding QR codes."
     },
     "report_prompting.py": {
       "action": "keep_active",

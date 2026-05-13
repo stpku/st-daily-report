@@ -4,6 +4,7 @@ LANGUAGE_SETTINGS = {
         "title_format": "# GeoAI & World Model Daily Insight",
         "scope_line": "**Scope:** GeoAI（空间智能/遥感/GIS+AI）+ World Model（3D生成与通用模拟/具身智能）",
         "priorities_text": "## 今日判断",
+        "mainline_label": "今日主线",
         "keyword_label": "今日关键词",
         "header_example_keywords": "AOD / Sentinel-2 / 物理世界模型 / 可信预测",
         "label_source": "原文",
@@ -27,6 +28,7 @@ LANGUAGE_SETTINGS = {
         "title_format": "# GeoAI + World Model Compact Dashboard",
         "scope_line": "**Scope:** GeoAI (Spatial Intelligence) + World Model (3D Generation & Simulation)",
         "priorities_text": "## Today's Read",
+        "mainline_label": "Main Thread",
         "keyword_label": "Keywords",
         "header_example_keywords": "AOD / Sentinel-2 / physical world models / calibrated forecasting",
         "label_source": "Source",
@@ -56,22 +58,26 @@ SYSTEM_PROMPT_TEMPLATE = """Generate a GeoAI Daily Dashboard for date: {date_str
    - Line 1: {title_format}
    - Line 2: Date: {date_str} (plain text, NO bold markers)
    - Line 3: {priorities_text}
-   - Lines 4-6: exactly 3 bullet points, each explaining a concrete trend or judgment
-   - Line 7: {keyword_label}: keyword1 / keyword2 / keyword3 / keyword4
+   - Line 4: {mainline_label}: one sentence, no more than 40 Chinese characters or 22 English words
+   - Lines 5-7: exactly 3 bullet points, each explaining a concrete trend or judgment
+   - Line 8: {keyword_label}: keyword1 / keyword2 / keyword3 / keyword4
 4. Lines 9-11: Blank line
 5. Lines 12+: News context (for generating content)
 
 **Structure Requirements:**
-1. Header: Title only (on first line), Date (plain text), {priorities_text} (3 bullets), {keyword_label} (one short line)
+1. Header: Title only (on first line), Date (plain text), {priorities_text}, {mainline_label}, 3 bullets, {keyword_label} (one short line)
     - Format example:
       {title_format}
       Date: {date_str}
       {priorities_text}
+      {mainline_label}: one crisp sentence...
       - Point 1...
       - Point 2...
       - Point 3...
       {keyword_label}: {header_example_keywords}
     - IMPORTANT: Do NOT use Scope in the header. Keep the first screen short and scannable on mobile.
+    - Each judgment must name the concrete object and implication. Avoid generic phrases such as "值得关注", "持续发展", or "具有重要意义" unless followed by a specific reason.
+    - Each judgment should fit in 1-2 mobile lines. Use "object: change, implication" style when possible.
     - Scope reference for this report family: {scope_line}
 
 2. Section A: Top Papers（{section_papers_desc}）- 3-5 papers with {papers_title_instruction} + {label_source} + {label_why_important}
@@ -79,19 +85,22 @@ SYSTEM_PROMPT_TEMPLATE = """Generate a GeoAI Daily Dashboard for date: {date_str
    **CRITICAL: You MUST choose Top Papers ONLY from the Papers block below. Do NOT introduce well-known older papers from memory. Preserve the exact title and exact source link from papers_context; you may translate the title into Chinese, but the English title and URL must remain the provided paper.**
    **CRITICAL: You MUST preserve the exact source links from the input papers_context. DO NOT fabricate, truncate, or modify paper links. Each {label_source} field must contain the complete URL, NOT just a homepage.**
 
-3. Section B: Industry News（{section_news_desc}）- 3-5 news items with {news_title_instruction} + {label_news_source} + {label_impact}
+3. Section B: Industry News（{section_news_desc}）- 1-5 news items with {news_title_instruction} + {label_news_source} + {label_impact}
    **CRITICAL CONSTRAINT: Diversify news sources - maximum 2 items from the same company/domain (e.g., max 2 from openai.com). Prioritize application-focused news (agriculture, urban planning, disaster response, environmental monitoring, drone/satellite applications) over pure AI model announcements. Skip weakly related finance/crypto/general market items unless the GeoAI or World Model relevance is direct and concrete.**
-4. Section C: {section_c_title} - 0-5 items with Name + {label_project_url} + {label_why_follow}. Prefer real releases, datasets, paper code, model/tool updates, or projects that connect to today's paper/news themes; avoid generic repeat items unless there is a direct reason today. If there is no high-value update, keep this section short instead of forcing filler.
+   If there are fewer than 3 high-confidence directly relevant news items, use fewer items instead of filling the section with generic AI marketing, hiring, finance, or speech content.
+4. Section C: {section_c_title} - 0-5 items with Name + {label_project_url} + {label_why_follow}. Prefer real releases, datasets, paper code, model/tool updates, or projects that connect to today's paper/news themes; avoid generic repeat items unless there is a direct reason today. If there is no high-value update, write one compact sentence and do not force filler.
 5. Section D: {section_d_title} - 1-3 grounded opportunities with Title + {label_opportunity}. These should come from today's papers/news/tools and describe a concrete problem, scenario, and possible collaboration or product direction. Do not call this section "OPC机会".
 
 **Format Requirements:**
 - Use markdown format with proper hierarchy
 - Paper format: "{papers_format}"
+- In Chinese output, prefer putting the Chinese title in the bold title and the original English title inside parentheses after it; keep the English title plain, not bold or italic.
 - Do NOT wrap the English paper title in italic or bold markers inside the parentheses.
 - News format: "{news_format}"
 - Tool/Data/Open-source format: "N) **[Name]**\\n   - {label_project_url}：[complete URL]\\n   - {label_why_follow}：[reason]"
-- Problem/opportunity format: "N) **[Opportunity Title]**\\n   - {label_opportunity}：[problem → scenario → possible direction]"
+- Problem/opportunity format: "N) **[Opportunity Title]**\\n   - {label_opportunity}：[problem → scenario → possible prototype or collaboration direction]"
 - Keep URLs as plain full text after the label so readers can copy them even if WeChat does not support external links.
+- Do not wrap original English titles in single asterisks. Never output italic markers in titles.
 - Use "---" separator between sections
 - Do NOT use nested bold markers (e.g., **Date:** **value**)
 - **CRITICAL: Do NOT include ANY selection logic, meta-commentary, or reasoning notes in the output.**
@@ -177,6 +186,7 @@ def build_system_prompt(
         title_format=settings["title_format"],
         scope_line=settings["scope_line"],
         priorities_text=settings["priorities_text"],
+        mainline_label=settings["mainline_label"],
         keyword_label=settings["keyword_label"],
         header_example_keywords=settings["header_example_keywords"],
         label_source=settings["label_source"],

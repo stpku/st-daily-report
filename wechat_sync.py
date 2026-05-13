@@ -6,11 +6,12 @@ import time
 import sys
 import html
 import path_utils
+from footer_policy import FooterPolicy
 
 # WeChat Official Account CSS Styles (module-level constant)
 STYLES = {
-    'h1': 'font-size: 22px; font-weight: bold; text-align: center; margin: 20px 0 30px; color: #1f2d3d;',
-    'h2': 'font-size: 18px; font-weight: bold; color: #1f2d3d; border-left: 5px solid #007bff; padding-left: 12px; margin: 40px 0 20px 0; line-height: 1.4;',
+    'h1': 'font-size: 22px; font-weight: bold; text-align: center; margin: 18px 0 24px; color: #182433; line-height: 1.45;',
+    'h2': 'font-size: 18px; font-weight: bold; color: #1f2d3d; border-left: 5px solid #2f80ed; padding-left: 12px; margin: 34px 0 6px 0; line-height: 1.4;',
     'h3': 'font-size: 16px; font-weight: bold; color: #1f2d3d; margin: 25px 0 10px 0;',
     'p': 'font-size: 16px; line-height: 1.75; color: #3f3f3f; margin: 15px 0; text-align: justify;',
     'ul': 'margin: 10px 0 15px 0; padding-left: 0; list-style: none;',
@@ -23,7 +24,27 @@ STYLES = {
     'hr': 'border: 0; border-top: 1px solid #eee; margin: 30px 0;',
     'insight': 'color: #e67e22; font-weight: bold;',
     'paper_title': 'font-size: 17px; font-weight: bold; color: #2c3e50; display: block; margin-top: 25px; margin-bottom: 10px; line-height: 1.5;',
-    'paper_meta': 'font-size: 14px; color: #7f8c8d; margin-bottom: 12px; display: block; word-break: break-all;',
+    'paper_meta': 'font-size: 13px; color: #6f7f8f; margin: 7px 0 12px 0; padding: 8px 10px; background-color: #f8fafc; border-radius: 4px; display: block; word-break: break-all; line-height: 1.65;',
+    'judgment': 'font-size: 15px; line-height: 1.75; color: #243447; margin: 8px 0; padding: 10px 12px; background-color: #f7fbff; border-left: 4px solid #2f80ed; border-radius: 4px; text-align: left;',
+    'keywords': 'font-size: 14px; line-height: 1.7; color: #576b95; margin: 12px 0 22px 0; padding: 8px 10px; background-color: #f6f8fa; border-radius: 4px; text-align: left;',
+    'mainline': 'font-size: 15px; line-height: 1.75; color: #1f2d3d; margin: 8px 0 10px 0; padding: 12px 14px; background-color: #fffaf2; border-left: 4px solid #f2994a; border-radius: 4px; text-align: left;',
+    'section_hint': 'font-size: 13px; color: #8a97a6; margin: 0 0 14px 17px; line-height: 1.6; text-align: left;',
+    'item_title': 'font-size: 16px; font-weight: bold; color: #243447; line-height: 1.55; margin: 18px 0 4px 0; text-align: left;',
+    'item_original': 'font-size: 13px; color: #7a8794; line-height: 1.55; margin-top: 4px; font-weight: normal; word-break: break-word;',
+}
+
+SECTION_HINTS = {
+    "今日判断": "先看主线，再扫三条判断",
+    "Today's Read": "Start with the main signal, then scan three judgments",
+    "A) Top Papers（精选 3-5 篇）": "精选论文｜方法、数据与评测趋势",
+    "A) Top Papers (3-5 selected papers)": "Selected papers | methods, data, evaluation",
+    "A) Top Papers": "Selected papers | methods, data, evaluation",
+    "B) Industry News（产业动态，精选 3-5 条）": "产业动态｜只保留高相关信号",
+    "B) Industry News": "Industry signals | direct relevance first",
+    "C) 工具 / 数据 / 开源更新": "工具与数据｜有价值才展开",
+    "C) Tools / Data / Open Source Updates": "Tools and data | expand only when valuable",
+    "D) 问题线索 / 创新机会": "从今日材料提炼可讨论的问题",
+    "D) Problem Leads / Innovation Opportunities": "Problem leads distilled from today's materials",
 }
 
 
@@ -35,6 +56,7 @@ class WeChatSync:
         self.secret = self.config.get('wx_app_secret')
         self.token = None
         self.token_expiry = 0
+        self.last_footer_selection = None
 
     def _load_config(self):
         if os.path.exists(self.config_path):
@@ -141,7 +163,42 @@ class WeChatSync:
             prefix = f"{list_index}) "
         return prefix, list_index
 
-    def _render_list_item(self, content, prefix=""):
+    def _is_judgment_section(self, current_section):
+        return current_section in {"今日判断", "Today's Read"}
+
+    def _render_judgment_item(self, content):
+        return (
+            f'<p style="{STYLES["judgment"]}">'
+            '<span style="font-weight: bold; color: #2f80ed; margin-right: 6px;">•</span>'
+            f'{self._process_inline(content)}</p>'
+        )
+
+    def _render_keyword_line(self, text):
+        match = re.match(r"^(今日关键词|Keywords)\s*[:：]\s*(.+)$", text, flags=re.IGNORECASE)
+        if not match:
+            return ""
+        label = html.escape(match.group(1), quote=False)
+        value = self._process_inline(match.group(2).strip())
+        return (
+            f'<p style="{STYLES["keywords"]}">'
+            f'<strong style="color: #2f80ed;">{label}：</strong>{value}</p>'
+        )
+
+    def _render_mainline_line(self, text):
+        match = re.match(r"^(今日主线|Main Thread)\s*[:：]\s*(.+)$", text, flags=re.IGNORECASE)
+        if not match:
+            return ""
+        label = html.escape(match.group(1), quote=False)
+        value = self._process_inline(match.group(2).strip())
+        return (
+            f'<p style="{STYLES["mainline"]}">'
+            f'<strong style="color: #c96f17;">{label}：</strong>{value}</p>'
+        )
+
+    def _render_list_item(self, content, prefix="", current_section=""):
+        if self._is_judgment_section(current_section):
+            return self._render_judgment_item(content)
+
         match = re.match(r'^\*\*(.*?)\*\*(.*)', content)
         if match:
             title_text = match.group(1).strip()
@@ -179,8 +236,13 @@ class WeChatSync:
             return f'<h1 style="{STYLES["h1"]}">{self._process_inline(line[2:])}</h1>', None, None
         if line.startswith('## '):
             current_section = line[3:]
+            hint = SECTION_HINTS.get(current_section)
+            hint_html = (
+                f'<p style="{STYLES["section_hint"]}">{self._process_inline(hint)}</p>'
+                if hint else ""
+            )
             return (
-                f'<h2 style="{STYLES["h2"]}">{self._process_inline(current_section)}</h2>',
+                f'<h2 style="{STYLES["h2"]}">{self._process_inline(current_section)}</h2>{hint_html}',
                 current_section,
                 0,
             )
@@ -192,9 +254,35 @@ class WeChatSync:
         content = self._process_inline(line[2:])
         return f'<blockquote style="{STYLES["blockquote"]}">{content}</blockquote>'
 
-    def _render_paper_title_line(self, line):
+    def _render_paper_title_line(self, line, current_section=""):
         full_line = line.replace('**', '')
-        return f'<div style="{STYLES["paper_title"]}">{self._process_inline(full_line)}</div>'
+        match = re.match(r'^(\d+)\)\s*(.+)$', full_line.strip())
+        if not match:
+            return f'<div style="{STYLES["paper_title"]}">{self._process_inline(full_line)}</div>'
+
+        index = match.group(1)
+        title = match.group(2).strip()
+        original = ""
+        paren_match = re.match(r'^(.+?)（([^（）]{8,260})）$', title)
+        if not paren_match:
+            paren_match = re.match(r'^(.+?)\(([^()]{8,260})\)$', title)
+        if paren_match:
+            title = paren_match.group(1).strip()
+            original = paren_match.group(2).strip()
+
+        label = "原题" if current_section.startswith("A)") else "原标题"
+        original_html = ""
+        if original:
+            original_html = (
+                f'<div style="{STYLES["item_original"]}">'
+                f'{label}：{self._process_inline(original)}</div>'
+            )
+
+        return (
+            f'<div style="{STYLES["item_title"]}">'
+            f'<span style="display: inline-block; min-width: 22px; color: #2f80ed;">{index})</span>'
+            f'{self._process_inline(title)}{original_html}</div>'
+        )
 
     def _render_paragraph_line(self, line):
         return f'<p style="{STYLES["p"]}">{self._process_inline(line)}</p>'
@@ -258,6 +346,16 @@ class WeChatSync:
                 output.append(signal_html)
                 continue
 
+            mainline_html = self._render_mainline_line(line_stripped)
+            if mainline_html:
+                output.append(mainline_html)
+                continue
+
+            keyword_html = self._render_keyword_line(line_stripped)
+            if keyword_html:
+                output.append(keyword_html)
+                continue
+
     # Special case: **Key Message:** should not trigger list mode
             if '**Key Message:**' in line:
                 output.append(self._render_paragraph_line(line))
@@ -288,7 +386,7 @@ class WeChatSync:
 
                 content = line[2:].strip()
                 prefix, list_index = self._get_list_prefix(current_section, list_index)
-                output.append(self._render_list_item(content, prefix))
+                output.append(self._render_list_item(content, prefix, current_section))
                 continue
 
             # Blockquotes
@@ -302,7 +400,7 @@ class WeChatSync:
             if re.match(r'^\d+\)\s*\*\*(.*?)\*\*', line):
                 match = re.match(r'^\d+\)\s*\*\*(.*?)\*\*(.*)', line)
                 if match:
-                    output.append(self._render_paper_title_line(line))
+                    output.append(self._render_paper_title_line(line, current_section))
                     continue
 
             # Paragraphs
@@ -514,8 +612,11 @@ class WeChatSync:
             return ""
 
     def _build_footer_html(self) -> str:
-        footer_path = os.path.join(os.path.dirname(self.config_path), 'footer_intro.md')
-        if not os.path.exists(footer_path):
+        config_dir = os.path.dirname(self.config_path)
+        selection = FooterPolicy(config_dir).choose()
+        self.last_footer_selection = selection
+        footer_path = selection.path if selection else None
+        if not footer_path or not os.path.exists(footer_path):
             return ""
         with open(footer_path, 'r', encoding='utf-8') as f:
             footer_md = f.read()

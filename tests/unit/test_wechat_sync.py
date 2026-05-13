@@ -99,6 +99,51 @@ def test_md_to_html_routes_signal_and_link_lines_through_shared_renderers(tmp_pa
     assert "Stronger retrieval quality" in html
 
 
+def test_md_to_html_renders_judgments_as_summary_blocks(tmp_path):
+    sync = _build_sync(tmp_path)
+    markdown = (
+        "## 今日判断\n"
+        "今日主线: 遥感评测从泛化转向可控对照。\n"
+        "- 遥感检索评测开始强调可控对照。\n"
+        "今日关键词: 遥感检索 / 世界模型"
+    )
+
+    html = sync.md_to_html(markdown)
+
+    assert "background-color: #f7fbff" in html
+    assert "今日主线" in html
+    assert "background-color: #fffaf2" in html
+    assert "遥感检索评测开始强调可控对照" in html
+    assert "今日关键词" in html
+    assert "background-color: #f6f8fa" in html
+
+
+def test_md_to_html_splits_original_english_title_as_subtitle(tmp_path):
+    sync = _build_sync(tmp_path)
+    markdown = "## A) Top Papers（精选 3-5 篇）\n1) **中文标题**（English Original Paper Title）"
+
+    html = sync.md_to_html(markdown)
+
+    assert "精选论文｜方法、数据与评测趋势" in html
+    assert "中文标题" in html
+    assert "原题：English Original Paper Title" in html
+
+
+def test_build_footer_html_uses_link_footer_without_qr(tmp_path):
+    config_dir = tmp_path
+    (config_dir / "footer_intro.md").write_text(
+        "### 继续交流\n\n[查看管理员联系方式](https://mp.weixin.qq.com/s/H79SAUA1GB0AcKUD6DSDdQ)",
+        encoding="utf-8",
+    )
+    sync = _build_sync(config_dir)
+
+    html = sync._build_footer_html()
+
+    assert "查看管理员联系方式" in html
+    assert "mp.weixin.qq.com/s/H79SAUA1GB0AcKUD6DSDdQ" in html
+    assert "<img" not in html
+
+
 # XSS regression tests for wechat_sync._process_inline
 # We don't need a real config for _process_inline testing
 _syncer = WeChatSync.__new__(WeChatSync)

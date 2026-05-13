@@ -18,6 +18,7 @@ sys.path.insert(0, SCRIPT_DIR)
 import arxiv_fetcher
 import news_fetcher
 import auto_generate_ai
+import daily_report_quality
 import history_db
 import path_utils
 
@@ -44,7 +45,14 @@ def build_news_context(news_items) -> str:
     return "\n".join(chunks) + "\n"
 
 
-def generate_and_save_report(config, target_date, papers_context, news_context, language):
+def generate_and_save_report(
+    config,
+    target_date,
+    papers_context,
+    news_context,
+    language,
+    quality_results=None,
+):
     content = auto_generate_ai.generate_content(
         config, target_date, papers_context, news_context, language=language
     )
@@ -54,6 +62,18 @@ def generate_and_save_report(config, target_date, papers_context, news_context, 
     content, unresolved = auto_generate_ai.validate_and_fix_arxiv_links(content, papers_context)
     if unresolved > 0:
         print(f"❌ 报告生成失败：{unresolved} 个 arXiv 链接无法解析")
+        return None
+
+    content = daily_report_quality.clean_markdown_artifacts(content)
+    validation = daily_report_quality.validate_report(content, target_date, language)
+    if quality_results is not None:
+        quality_results[language] = validation.to_dict()
+
+    for warning in validation.warnings:
+        print(f"⚠️  {language} quality warning: {warning}")
+    if not validation.ok:
+        for blocker in validation.blockers:
+            print(f"❌ {language} quality blocker: {blocker}")
         return None
 
     filepath = auto_generate_ai.save_report(target_date, language, content)
@@ -94,6 +114,11 @@ def main():
     print("\n📰 步骤 2/4: 获取产业新闻...")
     news_fetcher_inst = news_fetcher.NewsFetcher(config.get("exa_api_key", ""))
     news_items = news_fetcher_inst.fetch_industry_news(use_domestic=use_domestic)
+
+    source_cache_path = daily_report_quality.save_source_cache(
+        target_date, papers_context, news_items
+    )
+    print(f"📊 原始输入已缓存：{source_cache_path}")
     
     news_context = build_news_context(news_items)
     if news_items:
@@ -103,8 +128,10 @@ def main():
     
     # 3. 生成中文版日报
     print("\n✍️  步骤 3/4: 生成中文版日报...")
+    quality_results = {}
     filepath_zh = generate_and_save_report(
-        config, target_date, papers_context, news_context, language="zh"
+        config, target_date, papers_context, news_context, language="zh",
+        quality_results=quality_results,
     )
 
     if filepath_zh:
@@ -116,7 +143,8 @@ def main():
     # 4. 生成英文版日报
     print("\n✍️  步骤 4/4: 生成英文版日报...")
     filepath_en = generate_and_save_report(
-        config, target_date, papers_context, news_context, language="en"
+        config, target_date, papers_context, news_context, language="en",
+        quality_results=quality_results,
     )
 
     if filepath_en:
@@ -141,6 +169,24 @@ def main():
             print("⚠️  警告：未解析到任何新闻，Section B 可能格式异常")
     except Exception as e:
         print(f"⚠️  更新历史数据库时出错：{e}")
+
+    manifest_path = daily_report_quality.save_run_manifest(
+        target_date,
+        {
+            "source_cache": source_cache_path,
+            "outputs": {
+                "zh": filepath_zh,
+                "en": filepath_en,
+            },
+            "input_metrics": {
+                "papers_context_lines": len(papers_context.splitlines()),
+                "news_count": len(news_items),
+            },
+            "validation": quality_results,
+            "history_updated": history_ok,
+        },
+    )
+    print(f"📊 运行 manifest 已写入：{manifest_path}")
     
     print("\n" + "=" * 60)
     if history_ok:

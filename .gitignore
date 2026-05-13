@@ -35,6 +35,8 @@ runtime/
 !auto_generate_ai.py
 !llm_client.py
 !report_utils.py
+!daily_report_quality.py
+!footer_policy.py
 !log.py
 !report_prompting.py
 !report_history_extraction.py
@@ -49,6 +51,7 @@ runtime/
 !tests/**
 !config/
 !config/footer_intro.md
+!config/footer_intro_v*.md
 !config/
 
 # Keep credentials, state, logs, and generated debug files local.
