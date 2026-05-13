@@ -30,7 +30,7 @@ def save_report(date_str: str, language: str, content: str) -> str:
     return output_path
 
 
-def validate_and_fix_arxiv_links(content: str, papers_context: str) -> str:
+def validate_and_fix_arxiv_links(content: str, papers_context: str) -> tuple[str, int]:
     """Validate arXiv links in generated content and fix incomplete ones.
 
     Handles formats used in production output:
@@ -39,8 +39,13 @@ def validate_and_fix_arxiv_links(content: str, papers_context: str) -> str:
       - ``Link: https://arxiv.org/...``
 
     Incomplete links (e.g., ``原文：[arxiv.org] | https://arxiv.org/`` with no
-    paper ID) are matched against the full links in *papers_context* and
-    replaced with the correct URL.
+    paper ID) are matched against arXiv IDs found in the surrounding content
+    context. When exactly one candidate is found nearby, the bare URL is
+    replaced; otherwise it is counted as unresolved.
+
+    Returns:
+        tuple[str, int]: (fixed_content, unresolved_count) where unresolved_count
+        is the number of bare arXiv URLs that could not be resolved.
     """
     # Extract complete arXiv links from papers_context
     context_links: dict[str, str] = {}
@@ -50,7 +55,7 @@ def validate_and_fix_arxiv_links(content: str, papers_context: str) -> str:
         full_url = match.group(0)
         context_links[paper_id] = full_url
 
-    # Collect all complete arXiv URLs already present in content (for matching)
+    # Collect all complete arXiv URLs already present in content
     content_complete: dict[str, str] = {}
     for match in re.finditer(context_pattern, content, re.IGNORECASE):
         content_complete[match.group(1)] = match.group(0)
@@ -59,29 +64,56 @@ def validate_and_fix_arxiv_links(content: str, papers_context: str) -> str:
     available = {**context_links, **content_complete}
 
     fixed_count = 0
+    warning_count = 0
+    original_content = content  # save for context lookups
 
-    # Fix pattern 1: 原文：[arxiv.org] | https://arxiv.org/  (no paper ID)
     def _fix_incomplete_url(match: re.Match) -> str:
-        nonlocal fixed_count
-        prefix = match.group(1)  # "原文：[arxiv.org] | " or "Link: "
-        incomplete_url = match.group(2)
-        # Try to find any paper ID in the surrounding context of this line
-        # If the URL is bare (no ID), try first available from context
-        if available:
+        nonlocal fixed_count, warning_count
+        prefix = match.group(1)
+
+        if not available:
+            warning_count += 1
+            return match.group(0)
+
+        # Look at surrounding lines (±500 chars) for nearby arXiv IDs
+        match_pos = match.start()
+        ctx_start = max(0, match_pos - 500)
+        ctx_end = min(len(original_content), match_pos + 200)
+        local_context = original_content[ctx_start:ctx_end]
+
+        # Find arXiv IDs in this local context
+        local_ids = re.findall(r'(\d{4}\.\d{4,5}(?:v\d+)?)', local_context)
+
+        # Match against available URLs
+        matching_urls = []
+        seen = set()
+        for pid in local_ids:
+            if pid in available and pid not in seen:
+                matching_urls.append(available[pid])
+                seen.add(pid)
+
+        # Case 1: Single global candidate → fix it (unambiguous)
+        if len(available) == 1:
             best_url = next(iter(available.values()))
             fixed_count += 1
             return f"{prefix}{best_url}"
+
+        # Case 2: Local context found exactly one match → fix it
+        if len(matching_urls) == 1:
+            fixed_count += 1
+            return f"{prefix}{matching_urls[0]}"
+
+        # Case 3: Multiple global candidates and no single local match → unresolved
+        warning_count += 1
         return match.group(0)
 
-    # Match "原文：" or "Link:" followed by an incomplete arXiv URL (no /abs/)
-    # The negative lookahead (?!abs/) ensures we only match bare domain URLs
+    # Match "原文：" or "Link:" followed by an incomplete arXiv URL
     content = re.sub(
         r'(原文[：:]\s*(?:\[arxiv\.org\]\s*\|\s*)?)(https?://arxiv\.org/?(?!\S))(?!\s*abs/)',
         _fix_incomplete_url,
         content,
         flags=re.IGNORECASE,
     )
-    # Also match "Link:" style
     content = re.sub(
         r'(Link[：:]\s*)(https?://arxiv\.org/?(?!\S))(?!\s*abs/)',
         _fix_incomplete_url,
@@ -90,9 +122,9 @@ def validate_and_fix_arxiv_links(content: str, papers_context: str) -> str:
     )
 
     if fixed_count > 0:
-        logger.warning("Fixed %d incomplete arXiv links from papers_context", fixed_count)
+        logger.warning("Fixed %d incomplete arXiv links via local context matching", fixed_count)
 
-    return content
+    return content, warning_count
 
 
 def check_domestic_network() -> bool:

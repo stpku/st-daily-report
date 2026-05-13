@@ -60,6 +60,7 @@ def _resolve_target_date(date_arg: str | None) -> str:
 def main():
     parser = argparse.ArgumentParser(description="Sync Chinese daily report to WeChat draft")
     parser.add_argument("--date", help="Target date (YYYY-MM-DD). Defaults to today.")
+    parser.add_argument("--allow-missing", action="store_true", help="Allow missing report (return 0 instead of 1)")
     args = parser.parse_args()
 
     print("=" * 50)
@@ -71,13 +72,18 @@ def main():
 
     # Yesterday fallback: only when explicitly opted-in via env var
     if report_path is None and os.environ.get("WECHAT_ALLOW_YESTERDAY", "").strip() == "1":
-        yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+        target_dt = datetime.date.fromisoformat(target_date)
+        yesterday = (target_dt - datetime.timedelta(days=1)).isoformat()
         print(f"WECHAT_ALLOW_YESTERDAY=1 — falling back to yesterday ({yesterday})")
         report_path = find_report(yesterday)
 
     if not report_path:
-        print("No report to sync, skipping WeChat step.")
-        return 0
+        if args.allow_missing or os.environ.get("WECHAT_ALLOW_MISSING", "").strip() == "1":
+            print("No report to sync, skipping WeChat step.")
+            return 0
+        else:
+            print("Error: No report to sync. Set --allow-missing or WECHAT_ALLOW_MISSING=1 to skip without error.")
+            return 1
 
     print(f"Found report: {report_path}")
 

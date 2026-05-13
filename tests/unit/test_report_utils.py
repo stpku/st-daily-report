@@ -23,24 +23,49 @@ def test_save_report_writes_file(tmp_path, monkeypatch):
 def test_validate_and_fix_arxiv_links_fixes_incomplete():
     content = "1) Paper\n   - Link: https://arxiv.org/\n"
     papers_context = "- Title: Test\n  Link: https://arxiv.org/abs/2605.01234v1\n"
-    fixed = report_utils.validate_and_fix_arxiv_links(content, papers_context)
+    fixed, unresolved = report_utils.validate_and_fix_arxiv_links(content, papers_context)
     assert "https://arxiv.org/abs/2605.01234v1" in fixed
     assert "Link: https://arxiv.org/\n" not in fixed
+    assert unresolved == 0
 
 
 def test_validate_and_fix_arxiv_links_leaves_complete():
     content = "1) Paper\n   - Link: https://arxiv.org/abs/2605.01234v1\n"
-    fixed = report_utils.validate_and_fix_arxiv_links(content, "")
+    fixed, unresolved = report_utils.validate_and_fix_arxiv_links(content, "")
     assert fixed == content
+    assert unresolved == 0
 
 
 def test_validate_and_fix_arxiv_links_keeps_incomplete_without_context():
     content = "1) Paper\n   - Link: https://arxiv.org/\n"
-    fixed = report_utils.validate_and_fix_arxiv_links(content, "")
+    fixed, unresolved = report_utils.validate_and_fix_arxiv_links(content, "")
     assert fixed == content
+    assert unresolved == 1
 
 
 def test_check_domestic_network_returns_bool():
     # We can't control network state in CI, but the function should return a bool
     result = report_utils.check_domestic_network()
     assert isinstance(result, bool)
+
+
+def test_arxiv_bare_url_fixed_with_single_candidate():
+    """Bare arXiv URL should be fixed when exactly one candidate exists."""
+    content = "原文：https://arxiv.org/"
+    papers_context = "1. Paper A: https://arxiv.org/abs/2605.01234v1\n"
+    fixed, unresolved = report_utils.validate_and_fix_arxiv_links(content, papers_context)
+    assert unresolved == 0
+    assert "https://arxiv.org/abs/2605.01234v1" in fixed
+
+
+def test_arxiv_bare_url_not_fixed_with_multiple_candidates():
+    """Bare arXiv URL should NOT be fixed when multiple candidates exist."""
+    content = "原文：https://arxiv.org/"
+    papers_context = (
+        "1. Paper A: https://arxiv.org/abs/2605.01234v1\n"
+        "2. Paper B: https://arxiv.org/abs/2605.09999v2\n"
+    )
+    fixed, unresolved = report_utils.validate_and_fix_arxiv_links(content, papers_context)
+    assert unresolved == 1
+    # When multiple global candidates but no local match, content should remain unchanged
+    assert fixed == content  # Must remain completely unchanged

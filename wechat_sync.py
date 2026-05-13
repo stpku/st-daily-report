@@ -4,6 +4,7 @@ import requests
 import re
 import time
 import sys
+import html
 import path_utils
 
 # WeChat Official Account CSS Styles (module-level constant)
@@ -48,11 +49,11 @@ class WeChatSync:
     def get_access_token(self):
         if self.token and time.time() < self.token_expiry:
             return self.token
-        
+
         url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.app_id}&secret={self.secret}"
         resp = requests.get(url, timeout=30)
         data = resp.json()
-        
+
         if 'access_token' in data:
             self.token = data['access_token']
             # Refresh 200s before expiry
@@ -64,14 +65,14 @@ class WeChatSync:
     def get_cover_media_id(self):
         if 'wx_cover_media_id' in self.config:
             return self.config['wx_cover_media_id']
-        
+
         token = self.get_access_token()
         # Use permanent material for cover images
         url = f"https://api.weixin.qq.com/cgi-bin/material/add_material?access_token={token}&type=image"
-        
+
         base_dir = os.path.dirname(self.config_path)
         cover_path = os.path.join(base_dir, 'cover.jpg')
-        
+
         if not os.path.exists(cover_path):
             print("Cover image not found. Downloading placeholder...")
             try:
@@ -85,12 +86,12 @@ class WeChatSync:
             except Exception as e:
                 print(f"Error getting placeholder: {e}")
                 return None
-                
+
         with open(cover_path, 'rb') as f:
             files = {'media': f}
             resp = requests.post(url, files=files, timeout=30)
             data = resp.json()
-            
+
         if 'media_id' in data:
             self.config['wx_cover_media_id'] = data['media_id']
             self._save_config()
@@ -120,7 +121,7 @@ class WeChatSync:
     def md_to_html(self, md_content):
         # Pre-process content to handle custom markers
         md_content = self._preprocess_content(md_content)
-        
+
         # Block-level parsing
         return self._block_parse(md_content)
 
@@ -148,11 +149,15 @@ class WeChatSync:
             if rest_text.startswith(':') or rest_text.startswith('：'):
                 rest_text = rest_text[1:].strip()
 
+            # Escape HTML in user-controlled content
+            safe_title_text = html.escape(title_text, quote=False)
+            safe_prefix = html.escape(prefix, quote=False)
+
             item_html = (
                 '<p style="font-size: 15px; line-height: 1.75; color: #3f3f3f; '
                 'margin: 4px 0 8px 0; text-align: left;">'
                 f'<span style="margin-right: 8px; color: #333;">•</span>'
-                f'<strong style="color: #2c3e50;">{prefix}{title_text}</strong></p>'
+                f'<strong style="color: #2c3e50;">{safe_prefix}{safe_title_text}</strong></p>'
             )
             if rest_text:
                 item_html += (
@@ -200,7 +205,7 @@ class WeChatSync:
         in_list = False
         in_code_block = False
         code_content = []
-        
+
         list_index = 0
         current_section = ""
 
@@ -222,7 +227,7 @@ class WeChatSync:
                     # Start code block
                     in_code_block = True
                 continue
-                
+
             if in_code_block:
                 safe_line = line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
                 code_content.append(safe_line)
@@ -280,7 +285,7 @@ class WeChatSync:
             if line.startswith('- ') or line.startswith('* '):
                 if not in_list:
                     in_list = True
-                
+
                 content = line[2:].strip()
                 prefix, list_index = self._get_list_prefix(current_section, list_index)
                 output.append(self._render_list_item(content, prefix))
@@ -352,17 +357,66 @@ class WeChatSync:
         )
 
     def _process_inline(self, text):
-        # Links
-        text = re.sub(r'\[(.*?)\]\((.*?)\)', lambda m: f'<a href="{m.group(2)}" style="{STYLES["a"]}">{m.group(1)}</a>', text)
-        # Bold: Use non-greedy match
-        text = re.sub(r'\*\*(.+?)\*\*', r'<strong style="' + STYLES['strong'] + r'">\1</strong>', text)
-        # Italic: Simple match (after bold)
-        text = re.sub(r'(?<!\w)\*([^*]+?)\*(?!\w)', r'<em>\1</em>', text)
-        # Code
-        text = re.sub(r'`(.*?)`', r'<code style="' + STYLES['code'] + r'">\1</code>', text)
-        # Auto-link http/https if not already linked
-        text = re.sub(r'(?<!href=")(?<!\]\()(https?://[^\s<]+)', lambda m: f'<a href="{m.group(1)}" style="{STYLES["a"]}">{m.group(1)}</a>', text)
-        return text
+        """Process inline markdown → HTML. Parse tokens first, escape per-part."""
+
+        # Phase 1: Extract markdown tokens and replace with placeholders
+        tokens = []
+
+        def _store_token(replacement):
+            idx = len(tokens)
+            tokens.append(replacement)
+            return f'\x00TOKEN{idx}\x00'
+
+        # 1. Extract links [text](url) first (before other processing)
+        def _replace_link(m):
+            link_text = m.group(1)
+            url = m.group(2)
+            # Validate URL protocol — only allow http/https
+            if not re.match(r'^https?://', url, re.IGNORECASE):
+                url = '#'
+            safe_url = html.escape(url, quote=True)
+            safe_text = html.escape(link_text, quote=False)
+            return _store_token(f'<a href="{safe_url}" style="{STYLES["a"]}">{safe_text}</a>')
+        text = re.sub(r'\[(.*?)\]\(((?:[^()]*|\([^()]*\))*)\)', _replace_link, text)
+
+        # 2. Extract bold **text**
+        def _replace_bold(m):
+            safe_inner = html.escape(m.group(1), quote=False)
+            return _store_token(f'<strong style="{STYLES["strong"]}">{safe_inner}</strong>')
+        text = re.sub(r'\*\*(.+?)\*\*', _replace_bold, text)
+
+        # 3. Extract code `text`
+        def _replace_code(m):
+            safe_inner = html.escape(m.group(1), quote=False)
+            return _store_token(f'<code style="{STYLES["code"]}">{safe_inner}</code>')
+        text = re.sub(r'`(.*?)`', _replace_code, text)
+
+        # 4. Extract italic *text*
+        def _replace_italic(m):
+            safe_inner = html.escape(m.group(1), quote=False)
+            return _store_token(f'<em>{safe_inner}</em>')
+        text = re.sub(r'(?<!\w)\*([^*]+?)\*(?!\w)', _replace_italic, text)
+
+        # 5. Extract bare URLs from unescaped text BEFORE escaping
+        def _replace_bare_url(m):
+            bare_url = m.group(1)
+            safe_url = html.escape(bare_url, quote=True)
+            safe_display = html.escape(bare_url, quote=False)
+            return _store_token(f'<a href="{safe_url}" style="{STYLES["a"]}">{safe_display}</a>')
+        text = re.sub(r'(?<!\()(https?://[^\s<\)]+)', _replace_bare_url, text)
+
+        # Phase 2: Split by placeholders, escape remaining text
+        parts = re.split(r'(\x00TOKEN\d+\x00)', text)
+        result_parts = []
+        for part in parts:
+            token_match = re.match(r'\x00TOKEN(\d+)\x00', part)
+            if token_match:
+                result_parts.append(tokens[int(token_match.group(1))])
+            else:
+                escaped = html.escape(part, quote=False)
+                result_parts.append(escaped)
+
+        return ''.join(result_parts)
 
     def _process_footer(self, md_content, base_dir=None):
         lines = md_content.split('\n')
@@ -389,7 +443,7 @@ class WeChatSync:
                     '</div>'
                 )
                 continue
-            
+
             # Convert lists to simple paragraphs
             if line.startswith('- ') or line.startswith('* '):
                 content = line[2:].strip()
@@ -404,7 +458,7 @@ class WeChatSync:
             # Normal text
             else:
                 html_lines.append(f'<p style="{STYLES["p"]}">{self._process_inline(line)}</p>')
-                
+
         return '\n'.join(html_lines)
 
     def verify_html(self, html_content):
@@ -417,7 +471,7 @@ class WeChatSync:
         clean_for_check = re.sub(r'style="[^"]*\*"', '', clean_for_check)
         if re.search(r'[^*]\*\*[^*]', clean_for_check):
             warnings.append("Found potential unrendered bold markers (**)")
-            
+
         # Check for * (italic) not replaced
         # Tricky because * is used in CSS, regex, etc. But HTML shouldn't have loose * usually.
         # We look for * surrounded by spaces or words, but not inside tags.
@@ -425,7 +479,7 @@ class WeChatSync:
         clean_text = re.sub(r'<[^>]+>', '', html_content) # Strip tags
         if re.search(r'(?<!\*)\*(?!\*)', clean_text):
              # Filter out common footnote chars or math if any, but alert for now
-             pass 
+             pass
 
         if warnings:
             print("WARNING: HTML Verification Issues found:")

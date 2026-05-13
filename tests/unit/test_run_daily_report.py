@@ -45,7 +45,7 @@ def test_generate_and_save_report_runs_fix_and_save(monkeypatch):
     monkeypatch.setattr(
         run_daily_report.auto_generate_ai,
         "validate_and_fix_arxiv_links",
-        lambda content, papers_context: f"fixed::{content}::{papers_context}",
+        lambda content, papers_context: (f"fixed::{content}::{papers_context}", 0),
     )
 
     def fake_save(date_str, language, content):

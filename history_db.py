@@ -19,7 +19,7 @@ DB_PATH = path_utils.resolve_path(
     os.path.join(os.path.dirname(__file__), 'history.db'),
 )
 
-_NORM_RE = re.compile(r'[^a-zA-Z0-9]')
+_NORM_RE = re.compile(r'[^\w]|_')
 
 
 def _normalize(text: str) -> str:
@@ -41,6 +41,18 @@ def _get_connection():
         conn.close()
 
 
+def _add_column_if_missing(cursor, table: str, column_def: str):
+    """Add a column to an existing table if it doesn't already exist.
+
+    SQLite's ``ALTER TABLE ... ADD COLUMN`` raises ``OperationalError``
+    when the column already exists, so we catch that.
+    """
+    try:
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column_def}")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+
 def init_db():
     with _get_connection() as conn:
         cursor = conn.cursor()
@@ -55,6 +67,9 @@ def init_db():
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Migration: add columns that may be missing from older schemas
+        _add_column_if_missing(cursor, "papers", "title_norm TEXT")
+        _add_column_if_missing(cursor, "papers", "arxiv_id TEXT")
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_papers_title_norm ON papers(title_norm)')
 
         cursor.execute('''
@@ -66,6 +81,7 @@ def init_db():
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        _add_column_if_missing(cursor, "projects", "name_norm TEXT")
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_projects_name_norm ON projects(name_norm)')
 
         cursor.execute('''
@@ -258,22 +274,25 @@ def get_recent_papers_titles(limit: int = 10) -> List[str]:
         papers = [row[0] for row in cursor.fetchall()]
     return papers
 
-def update_history_from_content(content: str) -> List[str]:
+def update_history_from_content(content: str) -> dict:
     """
     Parse generated Markdown content to extract papers, projects, and news URLs,
     then update history database.
-    Returns list of new projects added.
+    Returns dict with keys:
+      parsed_papers, new_papers, parsed_news, new_news,
+      parsed_projects, new_projects, new_project_names.
     """
     new_projects = []
 
     # Papers
     paper_section_text = _find_section(
         content,
-        r'(## A\.|## Section A).*Top Papers',
-        r'## B\.|## Section B',
+        r'(## A[.)]|## A\b).*Top Papers',
+        r'## B[.)]|## B\b',
     )
     new_papers = []
-    for paper_title in _extract_paper_titles(paper_section_text):
+    all_papers = _extract_paper_titles(paper_section_text)
+    for paper_title in all_papers:
         if not is_paper_in_history(paper_title):
             add_paper(paper_title)
             new_papers.append(paper_title)
@@ -286,10 +305,11 @@ def update_history_from_content(content: str) -> List[str]:
     # Projects
     project_section_text = _find_section(
         content,
-        r'(## C\.|## Section C).*(Open Source Projects|Tools / Data / Open Source Updates)',
-        r'## D\.|## 3 New Ideas|## Problem Leads',
+        r'(## C[.)]|## C\b).*(Open Source|Tools|工具|开源|数据)',
+        r'## D[.)]|## D\b|## Problem Leads',
     )
-    for name in _extract_project_names(project_section_text):
+    all_projects = _extract_project_names(project_section_text)
+    for name in all_projects:
         if not is_project_in_history(name):
             add_project(name)
             new_projects.append(name)
@@ -302,11 +322,12 @@ def update_history_from_content(content: str) -> List[str]:
     # News URLs
     news_section_text = _find_section(
         content,
-        r'(## B\.|## Section B).*Industry News',
-        r'## C\.|## Section C|## 3 New Ideas|## Problem Leads',
+        r'(## B[.)]|## B\b).*(Industry|产业)',
+        r'## C[.)]|## C\b|## Problem Leads',
     )
     new_urls = []
-    for url in _extract_news_urls(news_section_text):
+    all_urls = _extract_news_urls(news_section_text)
+    for url in all_urls:
         if not is_news_in_history(url):
             add_news_url(url)
             new_urls.append(url)
@@ -314,7 +335,15 @@ def update_history_from_content(content: str) -> List[str]:
     if new_urls:
         logger.info("Updated history with %d new news URLs.", len(new_urls))
 
-    return new_projects
+    return {
+        "parsed_papers": len(all_papers),
+        "new_papers": len(new_papers),
+        "parsed_news": len(all_urls),
+        "new_news": len(new_urls),
+        "parsed_projects": len(all_projects),
+        "new_projects": len(new_projects),
+        "new_project_names": new_projects,
+    }
 
 
 def migrate_from_json(json_path: str | None = None):

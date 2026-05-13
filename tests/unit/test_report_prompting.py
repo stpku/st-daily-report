@@ -40,8 +40,8 @@ def test_build_system_prompt_includes_new_section_names_and_scope_reference():
         papers_constraint="papers-constraint",
     )
 
-    assert "Tools / Data / Open Source Updates" in prompt
-    assert "Problem Leads / Innovation Opportunities" in prompt
+    assert settings["section_c_title"] in prompt
+    assert settings["section_d_title"] in prompt
     assert settings["scope_line"] in prompt
     assert "news-context" in prompt
     assert "papers-context" in prompt

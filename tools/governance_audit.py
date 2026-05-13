@@ -270,11 +270,12 @@ def _check_git_tracked(manifest: dict, strict: bool) -> int:
 
     try:
         result = subprocess.run(
-            ["git", "ls-files", *candidates],
-            capture_output=True, text=True,
+            ["git", "-c", "core.quotepath=false", "ls-files", *candidates],
+            capture_output=True, text=True, encoding='utf-8',
             cwd=str(ROOT),
         )
-        tracked = set(result.stdout.strip().splitlines()) if result.stdout.strip() else set()
+        stdout = result.stdout or ""
+        tracked = set(stdout.strip().splitlines()) if stdout.strip() else set()
     except FileNotFoundError:
         print("WARN: git not found — skipping git-tracked check")
         return 0

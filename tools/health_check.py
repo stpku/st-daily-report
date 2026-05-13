@@ -12,6 +12,7 @@ import json
 import py_compile
 import re
 import shutil
+import sqlite3
 import sys
 import ast
 from pathlib import Path
@@ -23,8 +24,16 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "governance_manifest.json"
 CONFIG_DIR = ROOT / "config"
+DB_PATH = ROOT / "runtime" / "state" / "history.db"
 
 CONFIG_KEYS = ["api_providers", "wx_app_id", "wx_app_secret"]
+
+# Required columns for history database tables
+DB_SCHEMA = {
+    "papers": ["id", "title", "title_norm", "arxiv_id", "url", "added_at"],
+    "projects": ["id", "name", "name_norm", "url", "added_at"],
+    "news_urls": ["id", "url", "added_at"],
+}
 
 
 def _read_text(path: Path) -> str:
@@ -166,6 +175,34 @@ def _check_footer_images(errors: list[str]) -> None:
             errors.append(f"footer image missing: {image_ref}")
 
 
+def _check_history_db_schema(errors: list[str]) -> None:
+    """Validate history.db schema matches expected columns.
+    
+    Regression check: ensures init_db migration added required columns
+    like title_norm and name_norm to existing databases.
+    """
+    if not DB_PATH.exists():
+        return
+    
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+        cursor = conn.cursor()
+        
+        for table, expected_cols in DB_SCHEMA.items():
+            try:
+                cursor.execute(f"PRAGMA table_info({table})")
+                actual_cols = {row[1] for row in cursor.fetchall()}
+                missing = set(expected_cols) - actual_cols
+                if missing:
+                    errors.append(f"history.db table '{table}' missing columns: {sorted(missing)}")
+            except sqlite3.OperationalError as exc:
+                errors.append(f"history.db error checking table '{table}': {exc}")
+        
+        conn.close()
+    except sqlite3.OperationalError as exc:
+        errors.append(f"history.db schema check failed: {exc}")
+
+
 def _check_local_tools(warnings: list[str]) -> None:
     if shutil.which("git") is None:
         warnings.append("git executable not found on PATH; git_push.py may fail in the scheduler")
@@ -192,6 +229,7 @@ def main() -> int:
     _check_local_imports(errors)
     _check_config_shape(errors, warnings)
     _check_footer_images(errors)
+    _check_history_db_schema(errors)
     _check_local_tools(warnings)
     _check_report_archive(errors, warnings)
 

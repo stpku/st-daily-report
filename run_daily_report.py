@@ -51,14 +51,12 @@ def generate_and_save_report(config, target_date, papers_context, news_context, 
     if not content:
         return None
 
-    content = auto_generate_ai.validate_and_fix_arxiv_links(content, papers_context)
-    filepath = auto_generate_ai.save_report(target_date, language, content)
+    content, unresolved = auto_generate_ai.validate_and_fix_arxiv_links(content, papers_context)
+    if unresolved > 0:
+        print(f"❌ 报告生成失败：{unresolved} 个 arXiv 链接无法解析")
+        return None
 
-    # Only update history after file is successfully saved — avoids polluting
-    # the history DB when downstream steps (link validation, file write, EN
-    # generation) could still fail.
-    if filepath:
-        history_db.update_history_from_content(content)
+    filepath = auto_generate_ai.save_report(target_date, language, content)
 
     return filepath
 
@@ -76,6 +74,9 @@ def main():
     
     # 加载配置
     config = path_utils.load_config()
+    
+    # 初始化/迁移历史数据库
+    history_db.init_db()
     
     # 检查网络环境
     use_domestic = auto_generate_ai.check_domestic_network()
@@ -123,9 +124,29 @@ def main():
     else:
         print("❌ 生成英文版失败")
         sys.exit(1)
+
+    # Update history only after both languages have succeeded
+    # Read content from the Chinese version file
+    history_ok = False
+    try:
+        with open(filepath_zh, 'r', encoding='utf-8') as f:
+            zh_content = f.read()
+        result = history_db.update_history_from_content(zh_content)
+        history_ok = True
+        print(f"📝 历史数据库已更新：{result['parsed_papers']} 篇论文，{result['parsed_news']} 条新闻，{result['parsed_projects']} 个项目（新增 {result['new_papers']}/{result['new_news']}/{result['new_projects']}）")
+        # Warn if expected sections are empty — likely a parsing regression
+        if result['parsed_papers'] == 0:
+            print("⚠️  警告：未解析到任何论文，Section A 可能格式异常")
+        if result['parsed_news'] == 0:
+            print("⚠️  警告：未解析到任何新闻，Section B 可能格式异常")
+    except Exception as e:
+        print(f"⚠️  更新历史数据库时出错：{e}")
     
     print("\n" + "=" * 60)
-    print("✅ ST-Dailyreport 生成完成！")
+    if history_ok:
+        print("✅ ST-Dailyreport 生成完成！")
+    else:
+        print("⚠️  ST-Dailyreport 生成完成，但历史数据库更新失败！")
     print("=" * 60)
     output_dir = os.path.dirname(filepath_zh)
     filename_zh = os.path.basename(filepath_zh)
@@ -134,7 +155,7 @@ def main():
     print(f"📄 中文版：{filename_zh}")
     print(f"📄 英文版：{filename_en}")
     
-    return 0
+    return 0 if history_ok else 2
 
 
 if __name__ == "__main__":

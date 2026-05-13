@@ -1,5 +1,9 @@
+"""Tests for wechat_sync module including XSS regression tests."""
+import sys
+import os
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from wechat_sync import WeChatSync
 
 
@@ -93,3 +97,37 @@ def test_md_to_html_routes_signal_and_link_lines_through_shared_renderers(tmp_pa
     assert "https://example.com/paper" in html
     assert "Impact" in html
     assert "Stronger retrieval quality" in html
+
+
+# XSS regression tests for wechat_sync._process_inline
+# We don't need a real config for _process_inline testing
+_syncer = WeChatSync.__new__(WeChatSync)
+
+
+def test_script_tag_is_escaped():
+    """<script>alert(1)</script> must be escaped, not rendered."""
+    result = _syncer._process_inline('<script>alert(1)</script>')
+    assert '<script>' not in result
+    assert '&lt;script&gt;' in result
+
+
+def test_javascript_link_replaced_with_hash():
+    """[click](javascript:alert(1)) must produce href='#', not javascript:."""
+    result = _syncer._process_inline('[click](javascript:alert(1))')
+    assert 'javascript' not in result
+    assert 'href="#"' in result
+    assert '>click<' in result
+
+
+def test_bare_url_with_ampersand_not_double_escaped():
+    """Bare URL with & in query must not produce &amp;amp;"""
+    result = _syncer._process_inline('See https://example.com?a=1&b=2 for details.')
+    assert '&amp;amp;' not in result
+    assert 'href="https://example.com?a=1&amp;b=2"' in result
+
+
+def test_link_with_ampersand_in_url():
+    """Markdown link with & in URL must not double-escape."""
+    result = _syncer._process_inline('[x & y](https://example.com?a=1&b=2)')
+    assert '&amp;amp;' not in result
+    assert 'href="https://example.com?a=1&amp;b=2"' in result
